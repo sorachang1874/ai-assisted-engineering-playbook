@@ -20,6 +20,9 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Durable execution for long workflows: append-only event log, typed commands/outbox, activity attempts, idempotency, leases, retry policy, and materialized current state.
 - Agent-safe surfaces: agents should operate through operation/action/command APIs, not mutate domain tables directly.
 - Documentation is runtime infrastructure: `AGENTS.md`, `NEXT_TODO.md`, `PROGRESS.md`, contracts, and signoff docs should stay close to the code.
+- Model output is a contract: version prompts, validate output against a schema at the boundary, and keep records for review and rollback.
+- User-invisible fallback stays operator-visible: a graceful fallback for the user must still be logged, counted, and surfaced so it never becomes a silent normal path.
+- Secrets stay server-side and out of commits and logs; runtime mode comes from one central config, not scattered env vars.
 
 ## Repository Map
 

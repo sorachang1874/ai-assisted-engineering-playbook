@@ -47,6 +47,17 @@ Before adding or changing a shared field, define:
 
 Do not let long nightly tests be the first detector of field semantic drift.
 
+## AI and Safety Surfaces
+
+If this project calls a generative model:
+
+- Treat prompts as versioned contracts and validate model output against an explicit
+  schema at one boundary, not in every consumer.
+- Screen both input and output; substitute a safe fallback on a failed check.
+- Keep any user-invisible fallback operator-visible: log it, count it, surface it.
+
+See `10-prompt-and-model-output-contracts.md` and `11-safety-and-degradation.md`.
+
 ## Verification Commands
 
 Replace these with project-specific commands:

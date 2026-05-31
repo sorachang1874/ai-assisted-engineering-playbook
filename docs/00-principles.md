@@ -79,3 +79,18 @@ Docs are not optional if behavior changes. Update:
 - Contract docs when fields, events, commands, APIs, or owners change.
 - Signoff docs when test gates or runtime modes change.
 
+## 8. User-Invisible Fallback Must Stay Operator-Visible
+
+A degraded or fallback response can be invisible to the end user, but its use must always
+be visible to operators: logged, counted, and surfaced in metrics or preflight. This
+reconciles "always return a graceful result" with "no hidden fallback" — the fallback is
+graceful for the user and recorded for the operator. A fallback no one can see is a silent
+normal path. See `11-safety-and-degradation.md`.
+
+## 9. Model Output Is a Contract
+
+When the system depends on a generative model, the prompt and the output shape are
+production contracts. Version prompts, validate output against an explicit schema at the
+boundary, and keep records so behavior can be reviewed, compared, and rolled back. See
+`10-prompt-and-model-output-contracts.md`.
+

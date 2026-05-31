@@ -18,6 +18,18 @@ Primary and official references used to calibrate this playbook.
 - Microsoft CQRS pattern: https://learn.microsoft.com/en-us/azure/architecture/patterns/cqrs
 - Microsoft Event Sourcing pattern: https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing
 
+## Model Safety, Output, and Evaluation
+
+- OWASP Top 10 for LLM Applications: https://genai.owasp.org/llm-top-10/
+- Anthropic responsible use / safety guidance: https://docs.anthropic.com/en/docs/test-and-evaluate/strengthen-guardrails
+- OpenAI safety best practices: https://platform.openai.com/docs/guides/safety-best-practices
+- OpenAI evals: https://github.com/openai/evals
+
+## Configuration and Secrets
+
+- The Twelve-Factor App (config): https://12factor.net/config
+- OWASP Secrets Management Cheat Sheet: https://cheatsheetseries.owasp.org/cheatsheets/Secrets_Management_Cheat_Sheet.html
+
 ## Testing and CI
 
 - Testcontainers getting started: https://testcontainers.com/getting-started/
