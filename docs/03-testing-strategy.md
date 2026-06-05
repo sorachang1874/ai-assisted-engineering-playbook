@@ -49,6 +49,43 @@ Provider tests should separate:
 
 Batch providers should expose stable item IDs, not rely only on array order.
 
+## Artifact Tests
+
+For agent-produced workflows, test the artifacts, not only the code path that
+generates them.
+
+Add tests for:
+
+- required fields and schema version;
+- invalid or stale inputs;
+- overwrite protection;
+- redaction and sensitive-output rejection;
+- explicit boundary flags;
+- fail-closed status derivation;
+- snapshot drift between reviewed inputs and current sources;
+- malformed numeric or enum config;
+- generated reports, queues, handoffs, status summaries, and manifests.
+
+If a malformed input crashes the script before it can write a blocked artifact,
+the operator loses auditability. Prefer fail-closed output with issue counts
+over unstructured exceptions for expected bad input.
+
+## Promotion Boundary Tests
+
+Any artifact that can influence a downstream decision should carry negative
+capability flags such as:
+
+- external requests allowed;
+- secret reads allowed;
+- cache writes allowed;
+- user-facing output allowed;
+- publication allowed;
+- scheduling allowed.
+
+Tests should prove dangerous flags are ignored, rejected, or forced false until
+the correct gate passes. A green parser test is not enough if a later summary
+can accidentally reinterpret a planning artifact as execution evidence.
+
 ## Pre-Manual Tests
 
 Before manual QA, run a pre-manual gate that checks:
@@ -59,4 +96,3 @@ Before manual QA, run a pre-manual gate that checks:
 - Recent workflow metrics are within known ranges.
 - UI does not expose contract/debug wording to end users.
 - Provider fakes match live response shape for the tested path.
-

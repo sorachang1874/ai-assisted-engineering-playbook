@@ -1,0 +1,69 @@
+schema_version: phase_registry.v0
+policy:
+  workflow_doc: docs/engineering_workflow.md
+  phase_brief_template: templates/AGENT_TASK_BRIEF.template.md
+  review_packet_template: templates/REVIEW_PACKET.template.md
+  default_evidence_mode: fail_closed
+  local_diagnostic_evidence: diagnostic_only
+  review_gate_triggers:
+    - contract_or_schema_change
+    - milestone_implementation_or_completion
+    - evidence_semantics_change
+    - output_chain_change
+    - external_requests_or_remote_execution
+    - secrets_or_private_resource_handling
+    - default_config_or_runtime_mode_change
+    - dependency_toolchain_runtime_change
+    - effectiveness_or_production_claim
+
+phases:
+  - id: p0-contract-foundation
+    title: Contract foundation
+    lifecycle_stage: design
+    status: in_progress
+    decision: Decide whether the shared artifact contract is complete enough to implement.
+    non_decisions:
+      - Live execution is not approved.
+      - Publication is not approved.
+      - User-facing claims are not approved.
+    effective_result:
+      proves:
+        - The producer, consumer, schema, fallback, and validation boundaries are explicit.
+      does_not_prove:
+        - Runtime effectiveness, production readiness, or public safety.
+      required_evidence:
+        - Contract document.
+        - Review packet.
+        - Fast preflight command.
+      downstream_consumers:
+        - Implementation task brief.
+        - Operator queue or delivery checklist.
+    evidence_scope:
+      - plan_only
+      - local_diagnostic
+    gate_plan:
+      design:
+        required: true
+        status: not_started
+        required_before: Implementing a new producer or consumer.
+        evidence_ref:
+      implementation:
+        required: true
+        status: not_started
+        required_before: Treating generated artifacts as valid evidence.
+        evidence_ref:
+      adoption:
+        required: true
+        status: not_started
+        required_before: Replacing defaults, publishing, scheduling, or making user-facing claims.
+        evidence_ref:
+    boundaries:
+      external_requests_allowed: false
+      provider_calls_allowed: false
+      secret_values_may_be_read: false
+      user_facing_output_allowed: false
+      publication_allowed: false
+      scheduled_execution_allowed: false
+    blocked_by:
+      - Design Gate not complete.
+    next_artifact: docs/designs/<design>.md

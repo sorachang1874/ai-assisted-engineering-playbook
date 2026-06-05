@@ -13,6 +13,28 @@ Define runtime modes explicitly:
 
 Do not let mode be inferred from arbitrary environment variables. Use a central runtime config.
 
+## Evidence Classes
+
+Runtime mode should be reflected in the evidence you produce. A run can succeed
+technically while still being the wrong evidence for a downstream claim.
+
+Useful evidence classes include:
+
+- plan-only: no execution, only preconditions and planned actions;
+- local diagnostic: useful for debugging, not proof of production behavior;
+- scripted/fake-provider: deterministic behavior with no external cost;
+- clean local live: targeted live evidence under a known local environment;
+- remote runner: evidence from a separate host or region;
+- private/paid redacted: structurally useful but not redistributable;
+- public-source static: safe to inspect but not necessarily quality evidence;
+- external-provider: bounded live calls with budget, rate, and audit records;
+- publication evidence: explicit proof that an artifact is safe to leave the
+  workspace.
+
+Record evidence class in generated artifacts and reports. Do not let local
+diagnostic or remote-runner evidence silently promote production readiness,
+user-facing claims, or publication.
+
 ## Data Isolation
 
 Each mode should have isolated:
@@ -46,4 +68,3 @@ Use containerized dependencies where behavior matters:
 - Browser smoke environments.
 
 Avoid fixed ports, hardcoded hostnames, floating `latest` image tags, and shared mutable containers in CI.
-

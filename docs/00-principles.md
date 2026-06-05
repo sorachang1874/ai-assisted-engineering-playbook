@@ -79,7 +79,24 @@ Docs are not optional if behavior changes. Update:
 - Contract docs when fields, events, commands, APIs, or owners change.
 - Signoff docs when test gates or runtime modes change.
 
-## 8. User-Invisible Fallback Must Stay Operator-Visible
+## 8. Work in Explicit Loops
+
+AI-assisted engineering works best as a visible loop, not as a long hidden
+implementation run:
+
+1. Plan: define the decision, contract, artifact chain, boundaries, and gate.
+2. Execute: implement the smallest coherent unit against the accepted contract.
+3. Test: validate code and generated artifacts with fast fail-closed checks.
+4. Analyze: compare outputs against the decision the phase is supposed to
+   enable.
+5. Review: ask an independent reviewer to judge the right gate with a packet.
+6. Adopt: change defaults, schedules, publication, or user-facing claims only
+   after the adoption gate passes.
+
+Skipping early design usually moves discovery to the most expensive point:
+late workflow tests, live runs, or manual review.
+
+## 9. User-Invisible Fallback Must Stay Operator-Visible
 
 A degraded or fallback response can be invisible to the end user, but its use must always
 be visible to operators: logged, counted, and surfaced in metrics or preflight. This
@@ -87,10 +104,9 @@ reconciles "always return a graceful result" with "no hidden fallback" — the f
 graceful for the user and recorded for the operator. A fallback no one can see is a silent
 normal path. See `11-safety-and-degradation.md`.
 
-## 9. Model Output Is a Contract
+## 10. Model Output Is a Contract
 
 When the system depends on a generative model, the prompt and the output shape are
 production contracts. Version prompts, validate output against an explicit schema at the
 boundary, and keep records so behavior can be reviewed, compared, and rolled back. See
 `10-prompt-and-model-output-contracts.md`.
-

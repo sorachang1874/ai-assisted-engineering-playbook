@@ -29,3 +29,22 @@ A fast check should confirm, before long tests or deploy:
 - No secret values are present in committed files or client bundles.
 - The intended runtime mode is selected and its required config is present.
 - Test paths are not pointed at production credentials or data.
+
+## Generated Output Scans
+
+Secret scanning should cover generated artifacts, not only source files.
+
+Scan:
+
+- JSON, JSONL, YAML, and CSV outputs;
+- Markdown reports;
+- operator queues and handoffs;
+- status summaries;
+- manifests and publication bundles;
+- prompt/model records.
+
+Reports should use placeholders, generic aliases, hashes, or aggregate counts
+instead of provider names, credentials, endpoint values, account IDs, or raw
+responses. If a sensitive-looking pattern is intentionally present in a
+template, keep it out of the normal generated-output scan or document the false
+positive clearly.

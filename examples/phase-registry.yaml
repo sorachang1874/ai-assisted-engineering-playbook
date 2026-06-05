@@ -1,0 +1,64 @@
+schema_version: phase_registry.v0
+policy:
+  default_evidence_mode: fail_closed
+  local_diagnostic_evidence: diagnostic_only
+  review_gate_triggers:
+    - contract_or_schema_change
+    - milestone_implementation_or_completion
+    - evidence_semantics_change
+    - output_chain_change
+    - external_requests_or_remote_execution
+    - secrets_or_private_resource_handling
+    - default_config_or_runtime_mode_change
+    - dependency_toolchain_runtime_change
+    - effectiveness_or_production_claim
+
+phases:
+  - id: p2-provider-collection
+    title: Provider collection planner
+    lifecycle_stage: design
+    status: in_progress
+    decision: Decide whether a plan-only provider collection artifact can be implemented.
+    non_decisions:
+      - Live provider calls are not approved.
+      - Scheduler execution is not approved.
+      - User-facing output is not approved.
+    effective_result:
+      proves:
+        - The collection plan contract is complete enough to implement.
+      does_not_prove:
+        - Provider quality, production readiness, or public safety.
+      required_evidence:
+        - Design document.
+        - Review packet.
+        - Contract preflight.
+      downstream_consumers:
+        - Plan-only implementation task.
+        - Future operator handoff.
+    evidence_scope:
+      - plan_only
+      - local_diagnostic
+    gate_plan:
+      design:
+        required: true
+        status: go
+        required_before: Implementing the planner.
+        evidence_ref: docs/reviews/review-gate-index.md#provider-collection-plan-design
+      implementation:
+        required: true
+        status: not_started
+        required_before: Treating generated plans as valid operator evidence.
+        evidence_ref:
+      adoption:
+        required: true
+        status: not_started
+        required_before: Live execution, scheduling, publication, or default config changes.
+        evidence_ref:
+    boundaries:
+      external_requests_allowed: false
+      provider_calls_allowed: false
+      secret_values_may_be_read: false
+      user_facing_output_allowed: false
+      publication_allowed: false
+      scheduled_execution_allowed: false
+    next_artifact: docs/designs/provider_collection_plan.md

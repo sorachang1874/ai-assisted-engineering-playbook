@@ -13,6 +13,8 @@
 - Write contracts for core APIs and shared states.
 - Add owner matrix for user-visible fields.
 - Add first contract preflight.
+- Add a phase registry for work that will span multiple changes.
+- Add a review packet template before the first independent review gate.
 - Start documenting migration bridges.
 
 ## Early Product: Stabilize Testing
@@ -50,3 +52,11 @@ After every incident:
 - Remove one hidden fallback or heuristic if possible.
 - Update the playbook if the lesson is reusable.
 
+After every milestone:
+
+- Compare intended decision, generated artifacts, validation, and actual
+  downstream use.
+- Promote only the artifacts whose gate explicitly passed.
+- Record which checks caught issues late and move those checks earlier.
+- Delete or archive stale plans so future agents do not treat them as current
+  evidence.

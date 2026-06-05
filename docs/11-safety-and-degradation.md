@@ -41,3 +41,20 @@ When unsafe or malformed output is caught (or escapes):
 Treat the safety boundary like any other contract: owner, allowed/blocked conditions,
 where it is enforced, what the fallback is, and a fast check that proves it is wired in.
 Enforce it at one boundary (the gateway/adapter), not scattered across consumers.
+
+## Fail-Closed Artifacts
+
+Expected bad input should usually create an auditable blocked artifact instead
+of crashing in a way that leaves no evidence.
+
+Examples:
+
+- malformed config produces `blocked` with issue counts;
+- policy drift produces `blocked` before execution;
+- unsafe boundary flags are rejected or forced false;
+- stale cache rows become `facts_missing`, not implicit success;
+- missing clean runtime evidence keeps readiness `untested`, not failed or
+  passed by guesswork.
+
+Fail-closed artifacts let operators and reviewers understand what is blocked and
+why. They also give future agents a durable state to resume from.

@@ -15,7 +15,9 @@ Before code changes:
 1. Restate the engineering goal.
 2. Identify affected modules, contracts, APIs, config, tests, and docs.
 3. Search all usages of changed symbols.
-4. Prefer root-cause fixes over narrow patches.
+4. Identify the artifact, evidence class, and review gate if the work changes
+   shared behavior or generated outputs.
+5. Prefer root-cause fixes over narrow patches.
 
 During implementation:
 
@@ -28,8 +30,9 @@ Before completion:
 
 1. Run targeted tests.
 2. Run broader tests if shared abstractions changed.
-3. Report validation honestly.
-4. Document residual risks.
+3. Validate generated artifacts, reports, manifests, and handoffs when present.
+4. Report validation honestly.
+5. Document residual risks.
 
 ## Contract Field Ownership
 
@@ -58,6 +61,18 @@ If this project calls a generative model:
 
 See `10-prompt-and-model-output-contracts.md` and `11-safety-and-degradation.md`.
 
+## Review Gates
+
+Use explicit gates:
+
+- Design Gate: contracts, artifact chain, boundaries, validation plan.
+- Implementation Gate: code, tests, generated artifacts, exact validation output.
+- Adoption Gate: defaults, schedules, publication, user-facing output, or
+  production claims.
+
+A `GO` applies only to the named gate. Do not treat a design approval as
+permission to execute, publish, schedule, or change defaults.
+
 ## Verification Commands
 
 Replace these with project-specific commands:
@@ -79,4 +94,3 @@ Progress and final reports should include:
 - Changes
 - Validation
 - Residual risks
-

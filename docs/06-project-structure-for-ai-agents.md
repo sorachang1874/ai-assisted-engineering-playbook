@@ -11,6 +11,8 @@ At the root:
 - `docs/`: contracts, runtime modes, testing, architecture.
 - `scripts/`: repeatable developer and CI commands.
 - `tests/`: unit, contract, integration, smoke.
+- `artifacts/` or `var/`: generated local outputs that are useful for review
+  but not necessarily committed.
 
 ## Contract Docs
 
@@ -55,3 +57,18 @@ For large codebases, include lightweight module maps:
 - Test commands
 - Migration status
 
+## Generated Artifact Boundaries
+
+Generated outputs should be organized by purpose and evidence class, not dumped
+into one flat folder. A useful pattern is:
+
+- `artifacts/plans/`: plan-only outputs with execution flags false;
+- `artifacts/reports/`: human-readable summaries generated from validated data;
+- `artifacts/manifests/`: machine-readable inventories, digests, and source
+  snapshots;
+- `artifacts/private/`: local-only outputs that must not be published;
+- `artifacts/tmp/`: disposable scratch output.
+
+Document which generated paths are committed, ignored, scanned for secrets,
+reviewed, or safe to publish. Do not let a report become user-facing just
+because it is easy to render.

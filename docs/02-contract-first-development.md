@@ -47,6 +47,45 @@ Before signoff:
 - Prove all public surfaces agree.
 - Prove migration bridges are blocked or explicitly tolerated.
 
+## Artifact-First Phase Model
+
+For non-trivial work, plan from the artifact chain backward:
+
+1. Decision: what decision should be possible after this phase?
+2. Evidence: what artifact legitimately supports that decision?
+3. Contract: what schema, owner, producer, consumer, fallback, redaction, and
+   overwrite policy govern the artifact?
+4. Validation: what fast check proves the artifact is coherent?
+5. Review: what gate must pass before the artifact can be used downstream?
+6. Adoption: what separate gate is required before defaults, schedulers,
+   publication, or user-facing claims change?
+
+This prevents a common agent failure mode: implementing a useful-looking script
+only to discover later that its output cannot be interpreted, reviewed, or
+consumed safely.
+
+## Phase Registry
+
+When work spans multiple turns, agents, or review gates, keep a small structured
+phase registry near the code. The registry should record:
+
+- phase id, title, lifecycle stage, and status;
+- the decision the phase enables;
+- non-decisions the phase must not be used for;
+- effective-result criteria: proves, does not prove, required evidence, and
+  downstream consumers;
+- required design, implementation, and adoption gates;
+- boundary flags for risky behavior such as external calls, secret reads,
+  publication, scheduling, and user-facing output;
+- the next artifact to produce.
+
+See `templates/PHASE_REGISTRY.template.yaml` and
+`examples/phase-registry.yaml`.
+
+The registry is not bureaucracy. It gives agents a durable source of truth when
+chat history is long, compacted, or missing. It also turns review-gate triggers
+into something that fast preflight can validate.
+
 ## Field Semantics
 
 Do not reuse names for different meanings. For example:
@@ -57,3 +96,18 @@ Do not reuse names for different meanings. For example:
 
 If meanings differ, use different names and owners.
 
+## Snapshot Drift
+
+A review approves a snapshot, not just a filename. If an implementation consumes
+a reviewed policy, schema, command template, or provider configuration, record a
+digest or reviewed-field snapshot and compare it before use.
+
+Fail closed on drift:
+
+- produce a blocked artifact or issue count;
+- do not silently continue with the changed source;
+- do not let long workflow tests be the first detector.
+
+This applies to provider policies, prompt contracts, generated config,
+publication manifests, migration plans, and any artifact whose meaning depends
+on prior review.

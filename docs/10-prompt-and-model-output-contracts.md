@@ -29,6 +29,25 @@ output downstream.
 - Validate at the boundary (the gateway/adapter), not in every consumer.
 - A schema miss is a handled case with a fallback, not an exception that reaches the user.
 
+## Negative Capability Flags
+
+Model output and agent-generated artifacts should say what they do not prove.
+This is especially important when an artifact is later consumed by another
+agent, evaluator, queue, or publication step.
+
+Useful flags include:
+
+- `user_facing_output_allowed`
+- `publication_allowed`
+- `external_requests_allowed`
+- `cache_writes_allowed`
+- `profile_mutation_allowed`
+- `scheduling_allowed`
+
+Default these to false. Promotion requires a separate gate and validation
+evidence. This prevents a planning artifact or model summary from being
+mistaken for execution evidence or publication approval.
+
 ## Records Enable Review, Comparison, and Rollback
 
 Prompt/output handling fits the same append-only, auditable model as events: keep records

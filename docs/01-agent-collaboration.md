@@ -25,6 +25,25 @@ Each agent task should define:
 
 See `templates/AGENT_TASK_BRIEF.template.md`.
 
+## Phase and Gate Format
+
+For work that spans more than one coherent change, keep a phase registry and
+review packets:
+
+- phase registry: current stage, decision enabled, non-decisions, evidence
+  requirements, boundary flags, next artifact;
+- design packet: contract, artifact chain, evidence class, validation plan;
+- implementation packet: files changed, tests, generated artifacts, observed
+  outputs, residual risks;
+- adoption packet: proof that defaults, schedules, publication, or user-facing
+  claims are allowed for the current artifact.
+
+See `templates/PHASE_REGISTRY.template.yaml` and
+`templates/REVIEW_PACKET.template.md`.
+
+Treat packets as handoff artifacts. A future agent should be able to understand
+why a phase is blocked or ready without reading the full chat history.
+
 ## Multi-Agent Rules
 
 Use parallel agents only when work is owner-bounded:
@@ -61,4 +80,3 @@ Good prompts ask agents to:
 - Report validation honestly.
 
 Avoid prompts that ask for broad implementation without contracts, such as "make the workflow stable" or "fix all state bugs." Convert them into bounded contract and owner tasks.
-
