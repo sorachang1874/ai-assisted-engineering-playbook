@@ -15,6 +15,10 @@ policy:
     - default_config_or_runtime_mode_change
     - dependency_toolchain_runtime_change
     - effectiveness_or_production_claim
+  missing_context_policy:
+    record_in_todo: true
+    record_in_review_packet: true
+    block_completion_when_decision_depends_on_missing_context: true
 
 phases:
   - id: p0-contract-foundation
@@ -66,4 +70,10 @@ phases:
       scheduled_execution_allowed: false
     blocked_by:
       - Design Gate not complete.
+    missing_context:
+      - item:
+        missing_capability:
+        impact:
+        follow_up:
+        status: open
     next_artifact: docs/designs/<design>.md

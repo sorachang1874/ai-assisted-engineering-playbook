@@ -30,6 +30,46 @@ If the packet is missing for a milestone, contract change, output-chain change,
 external execution, secret handling, adoption, or effectiveness claim, the
 review package is incomplete.
 
+## Gate Trigger Matrix
+
+Use an independent review gate when a change affects any of these surfaces:
+
+| Trigger | Minimum Gate | Why |
+| --- | --- | --- |
+| Contract or schema change | Design Gate before implementation; Implementation Gate after code | Prevents producers and consumers from diverging. |
+| New artifact chain, cache, report, queue, handoff, or manifest | Design Gate | Ensures outputs can be consumed, reviewed, redacted, and retired. |
+| Milestone implementation or completion | Implementation Gate | Verifies the completed slice supports the intended decision. |
+| External calls, live providers, remote execution, or scheduling | Design Gate plus Implementation Gate | Controls cost, rate limits, secrets, environment, and auditability. |
+| Secret or private-resource handling | Design Gate plus Implementation Gate | Prevents secret reads, secret emission, or private data leakage. |
+| Generated output that could be published or used by users | Implementation Gate and Adoption Gate | Separates internal evidence from public or user-facing claims. |
+| Defaults, runtime modes, feature flags, or profile/config mutation | Adoption Gate | Confirms the current artifact is safe to become normal behavior. |
+| Effectiveness, quality, production-readiness, or account-risk claims | Adoption Gate or evidence-specific review | Prevents diagnostic or partial evidence from becoming a broad claim. |
+| Toolchain or workspace dependency change affecting evidence | Design or Implementation Gate | Keeps environment drift from invalidating later runs. |
+
+A gate is not needed for every typo, comment, or isolated test fixture. It is
+needed when future agents, operators, users, or automation may interpret the
+change as stronger evidence or permission.
+
+## Review Packet Quality Bar
+
+The packet should make review possible without chat history. It should include:
+
+- the exact decision this gate must make;
+- the decisions that remain blocked;
+- changed files and generated artifacts;
+- schema versions and required fields;
+- producer, consumer, retention, and overwrite policy;
+- evidence class and promotion boundaries;
+- boundary flags for external calls, DNS/network discovery, secret reads,
+  cache writes, reviewed facts, publication, scheduling, and user-facing output;
+- validation commands with exact pass/fail results;
+- sensitive-output scan scope and result;
+- known missing context, missing tools, or unverified inputs.
+
+If the packet omits known missing context, reviewers should return `GO WITH
+FIXES` or `NO-GO` depending on whether the missing context can change the
+decision.
+
 ## Design Review
 
 Before accepting a design, check:
@@ -62,6 +102,10 @@ Before merging:
   for sensitive output.
 - Verify reviewed snapshots or digests prevent drift between review and
   execution.
+- Verify dry-run and sample artifacts cannot be interpreted as stronger
+  evidence than their boundary flags allow.
+- Verify tools or dependencies discovered missing during implementation are
+  tracked as follow-up work, not left only in chat history.
 
 ## Adoption Review
 

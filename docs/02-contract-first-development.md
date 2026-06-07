@@ -64,6 +64,30 @@ This prevents a common agent failure mode: implementing a useful-looking script
 only to discover later that its output cannot be interpreted, reviewed, or
 consumed safely.
 
+## Schema And Storage Before Code
+
+Define the schema and storage boundaries before writing a producer. For each
+artifact, decide:
+
+- schema version and required top-level fields;
+- producer and downstream consumers;
+- visibility: public, internal, local-only, private, or secret-bearing;
+- redaction rules and sensitive-output scan scope;
+- overwrite, append-only, and retention policy;
+- freshness or TTL semantics;
+- snapshot digest or reviewed-field drift checks;
+- allowed write modes and the gate required for each mode.
+
+Separate raw inputs, intermediate plans, execution records, reusable caches,
+reviewed facts, human reports, and publication bundles. A local diagnostic
+record should not share a path or schema with a durable reviewed fact. A sample
+cache should not silently become a main cache.
+
+When a provider or external system supports only single-item calls, design the
+cache and append semantics before adding pseudo-bulk behavior. Deduplicate work
+before requests, skip fresh cache rows, flush partial success safely, and record
+interrupted runs as partial rather than rewriting history.
+
 ## Phase Registry
 
 When work spans multiple turns, agents, or review gates, keep a small structured

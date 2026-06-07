@@ -15,7 +15,8 @@ Before changing files:
 1. Restate the real engineering goal.
 2. Identify affected modules, symbols, contracts, docs, tests, and operational flows.
 3. Search all usages before changing shared semantics.
-4. Prefer bounded root-cause fixes over symptom patches.
+4. Identify missing context or tools that would make the analysis partial.
+5. Prefer bounded root-cause fixes over symptom patches.
 
 During implementation:
 
@@ -29,7 +30,9 @@ Before completion:
 
 1. Run targeted validation.
 2. Check links and changed files.
-3. Report what changed, what was validated, and what remains.
+3. Record missing tools, unread inputs, or skipped validation in a durable TODO
+   or progress artifact when relevant.
+4. Report what changed, what was validated, and what remains.
 
 ## Contract Discipline
 
@@ -55,4 +58,6 @@ For multi-agent work:
 - Give each agent explicit files, contracts, and validation commands.
 - Require a handoff note with changed files, validation, residual risk, and next steps.
 - Avoid overlapping edits unless a lead agent owns merge resolution.
-
+- Use independent review gates for contract/schema changes, milestone
+  completion, output-chain changes, external execution, secrets, defaults,
+  publication, or production/user-facing claims.

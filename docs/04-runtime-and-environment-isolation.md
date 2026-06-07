@@ -68,3 +68,45 @@ Use containerized dependencies where behavior matters:
 - Browser smoke environments.
 
 Avoid fixed ports, hardcoded hostnames, floating `latest` image tags, and shared mutable containers in CI.
+
+## Workspace-Level Tooling
+
+Some tools are shared across many projects but are too heavy, fragile, or
+duplicative to install independently in every repository. Manage them at the
+workspace level when they are:
+
+- browser runtimes or browser system libraries;
+- document/PDF/OCR extraction tools;
+- container engines or remote-runner CLIs;
+- network diagnostic tools;
+- stable local command shims;
+- large model, test, or data-processing runtimes.
+
+Document the canonical workspace path, install source, version or checksum,
+required system packages, validation command, and project entry points that use
+the tool. Repositories should call the workspace tool through a stable shim or
+documented command, not through ad-hoc absolute paths copied from another
+project.
+
+Before installing a new shared tool, check whether an equivalent already exists
+in the workspace. Prefer one maintained dependency surface over many project
+copies. If the tool changes execution behavior, evidence collection, remote
+access, or generated outputs, route the change through a design or
+implementation review gate.
+
+## Missing Tool Follow-Up
+
+If a run cannot inspect required materials because a parser, browser, library,
+CLI, or system package is missing, do not treat the resulting analysis as
+complete. Record:
+
+- the blocked file, URL, fixture, or verification step;
+- the missing capability;
+- the temporary fallback, if any;
+- the recommended dependency scope: project-local, workspace-level, container,
+  or operator-provided export;
+- the next command that should pass after installation.
+
+Then ask for approval when installation has cost, security, credential, or
+system-wide implications. This keeps "could not read the PDF" or "browser
+runtime missing a system library" from becoming invisible lost context.

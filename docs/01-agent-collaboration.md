@@ -44,6 +44,25 @@ See `templates/PHASE_REGISTRY.template.yaml` and
 Treat packets as handoff artifacts. A future agent should be able to understand
 why a phase is blocked or ready without reading the full chat history.
 
+## Plan, Execute, Validate, Review
+
+Use explicit operating modes for substantial work:
+
+- Plan: name the decision, artifact chain, schemas, evidence class, boundaries,
+  and review gate.
+- Execute: implement the smallest coherent slice against the accepted plan.
+- Validate: run targeted tests, contract checks, generated-artifact checks, and
+  redaction scans.
+- Analyze: compare the produced artifact with the decision it was meant to
+  enable.
+- Review: ask an independent reviewer to judge the named gate from a packet.
+- Adopt: change defaults, schedules, publication, or user-facing claims only
+  after the adoption gate allows it.
+
+Do not use implementation success as a substitute for design acceptance, and do
+not use design acceptance as permission to execute risky actions. Each loop
+must say which decisions are enabled and which remain blocked.
+
 ## Multi-Agent Rules
 
 Use parallel agents only when work is owner-bounded:
@@ -62,11 +81,19 @@ Every handoff should include:
 - What changed
 - What was validated
 - What failed or was not run
+- What required context or tooling could not be accessed
 - Files touched
 - Residual risks
 - Next action
 
 The next agent should be able to resume without relying on chat history.
+
+If a missing dependency blocks context acquisition or verification, record it as
+a follow-up with the impacted artifact. Examples include missing browser
+libraries, PDF extraction tools, OCR, CLI authentication, local provider fakes,
+container runtimes, or system packages. The handoff should recommend whether to
+install a workspace-level dependency, use a project-local fixture, or ask the
+operator for a different input format.
 
 ## Prompting Agents
 

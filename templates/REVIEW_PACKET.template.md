@@ -75,6 +75,16 @@ All flags must be explicit.
 - Manifest/public-safe check:
 - Commands and exact results:
 
+## Missing Context And Tooling
+
+List anything the implementer could not inspect or validate because a file,
+fixture, dependency, browser, parser, account, CLI, system package, or provider
+tool was missing. If there are none, write `none`.
+
+| Missing input or check | Missing capability | Impact on this gate | Recommended follow-up | User/operator approval needed? |
+| --- | --- | --- | --- | --- |
+|  |  |  |  |  |
+
 ## Claims To Verify
 
 1. 

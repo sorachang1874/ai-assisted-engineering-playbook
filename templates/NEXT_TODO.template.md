@@ -37,6 +37,15 @@ Questions that need product or architecture decisions.
 | --- | --- | --- | --- |
 |  |  |  |  |
 
+## Missing Context Or Tooling
+
+Track inputs, tools, dependencies, or credentials that prevented complete
+inspection or validation. These items should not live only in chat history.
+
+| Missing input/check | Missing capability | Current fallback | Impacted phase/artifact | Recommended follow-up | Owner | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  |  |  |  |  |  |
+
 ## Validation Matrix
 
 | Gate | Command | Required Before | Last Result |
@@ -45,4 +54,3 @@ Questions that need product or architecture decisions.
 | Contract | `make test-contract` | PR |  |
 | Integration | `make test-integration` | merge |  |
 | Nightly | `make test-nightly` | release |  |
-

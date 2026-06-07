@@ -22,6 +22,10 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Documentation is runtime infrastructure: `AGENTS.md`, `NEXT_TODO.md`, `PROGRESS.md`, contracts, and signoff docs should stay close to the code.
 - Reviews need packets, not just prompts: design, implementation, and adoption reviews should receive explicit artifacts, boundaries, evidence classes, validation output, and claims to verify.
 - Plan-only artifacts before risky execution: external calls, cache writes, scheduled jobs, and publication should be preceded by reviewable plans that keep execution flags false.
+- Schema and storage before code: define artifact shape, visibility, write mode, retention, redaction, and downstream consumers before building producers.
+- Independent review gates are scoped: a `GO` approves only the named design, implementation, or adoption decision, not later live execution or public claims.
+- Workspace-level tooling should be managed deliberately: shared browsers, parsers, CLIs, container runtimes, and document tools need stable shims, validation commands, and ownership.
+- Missing context is a tracked work item: unread files, missing parsers, unavailable browser libraries, or skipped validation must be recorded before a phase is treated as complete.
 - Model output is a contract: version prompts, validate output against a schema at the boundary, and keep records for review and rollback.
 - User-invisible fallback stays operator-visible: a graceful fallback for the user must still be logged, counted, and surfaced so it never becomes a silent normal path.
 - Secrets stay server-side and out of commits and logs; runtime mode comes from one central config, not scattered env vars.

@@ -15,7 +15,11 @@
 - Add first contract preflight.
 - Add a phase registry for work that will span multiple changes.
 - Add a review packet template before the first independent review gate.
+- Add a review gate index or progress log that records verdict, scope, and
+  still-blocked decisions.
 - Start documenting migration bridges.
+- Start a dependency/tooling ledger for workspace-level binaries, browsers,
+  CLIs, parsers, and system packages.
 
 ## Early Product: Stabilize Testing
 
@@ -60,3 +64,7 @@ After every milestone:
 - Record which checks caught issues late and move those checks earlier.
 - Delete or archive stale plans so future agents do not treat them as current
   evidence.
+- Record missing tools, unread inputs, failed context extraction, and incomplete
+  fixtures as explicit follow-up items.
+- Update review-gate triggers when a user correction or incident reveals that a
+  boundary should have been caught before implementation.

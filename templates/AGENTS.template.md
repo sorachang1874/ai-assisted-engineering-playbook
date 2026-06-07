@@ -17,7 +17,9 @@ Before code changes:
 3. Search all usages of changed symbols.
 4. Identify the artifact, evidence class, and review gate if the work changes
    shared behavior or generated outputs.
-5. Prefer root-cause fixes over narrow patches.
+5. Identify any required context or tools that are missing before treating the
+   analysis as complete.
+6. Prefer root-cause fixes over narrow patches.
 
 During implementation:
 
@@ -31,8 +33,10 @@ Before completion:
 1. Run targeted tests.
 2. Run broader tests if shared abstractions changed.
 3. Validate generated artifacts, reports, manifests, and handoffs when present.
-4. Report validation honestly.
-5. Document residual risks.
+4. Record missing tools, unread inputs, or skipped validation in the project
+   TODO/progress docs.
+5. Report validation honestly.
+6. Document residual risks.
 
 ## Contract Field Ownership
 
@@ -73,6 +77,11 @@ Use explicit gates:
 A `GO` applies only to the named gate. Do not treat a design approval as
 permission to execute, publish, schedule, or change defaults.
 
+Trigger an independent review gate for contract or schema changes, milestone
+completion, evidence-semantics changes, generated output chains, external
+execution, secret handling, default changes, publication, and production or
+user-facing claims.
+
 ## Verification Commands
 
 Replace these with project-specific commands:
@@ -85,6 +94,10 @@ make test-smoke
 ```
 
 If a command is not available, state that explicitly.
+
+If a missing dependency prevents reading a required artifact or running a
+required validation, record the missing capability and recommended follow-up in
+the project TODO/progress docs before completing the task.
 
 ## Communication
 
