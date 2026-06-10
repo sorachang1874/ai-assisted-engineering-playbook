@@ -30,6 +30,10 @@ If the packet is missing for a milestone, contract change, output-chain change,
 external execution, secret handling, adoption, or effectiveness claim, the
 review package is incomplete.
 
+For HOW to run the reviewer (cross-model configuration, one-shot invocation,
+stdin/pipe pitfalls), see the Cross-Model Review Runbook in
+`07-multi-agent-parallel-work.md` § Independent Review Gate.
+
 ## Gate Trigger Matrix
 
 Use an independent review gate when a change affects any of these surfaces:
