@@ -27,8 +27,13 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Workspace-level tooling should be managed deliberately: shared browsers, parsers, CLIs, container runtimes, and document tools need stable shims, validation commands, and ownership.
 - Missing context is a tracked work item: unread files, missing parsers, unavailable browser libraries, or skipped validation must be recorded before a phase is treated as complete.
 - Model output is a contract: version prompts, validate output against a schema at the boundary, and keep records for review and rollback.
+- Operator decisions are artifacts: human overrides, exceptions, and approvals live in hand-authorable decision files that are independently reviewed per batch and machine-verified (verdict, digest, item-decision pairing) before anything applies them.
+- Derived artifacts carry digests of their inputs, and consumers verify all of them: partial digest checks create silent staleness, and status-string agreement is not freshness.
+- New evidence consumers degrade or maintain existing interpretations, never promote them: score and status promotion is always its own gated change, and every status enum value needs both a producer path and a consumer branch.
 - User-invisible fallback stays operator-visible: a graceful fallback for the user must still be logged, counted, and surfaced so it never becomes a silent normal path.
 - Secrets stay server-side and out of commits and logs; runtime mode comes from one central config, not scattered env vars.
+- Independent review means a different model: route the gate to a different model family than the one that authored and self-critiqued the artifact; same-model self-review shares blind spots, and cross-model review repeatedly catches false-negatives it misses.
+- Fail-closed validators are allowlists, not denylists: assert the artifact exactly matches a canonical safe shape (single source of truth, emitted by the generator and deep-equaled by the checker, with a cross-language parity test) instead of enumerating bad patterns, which never terminates.
 
 ## Repository Map
 

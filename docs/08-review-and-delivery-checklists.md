@@ -49,10 +49,42 @@ Use an independent review gate when a change affects any of these surfaces:
 | Defaults, runtime modes, feature flags, or profile/config mutation | Adoption Gate | Confirms the current artifact is safe to become normal behavior. |
 | Effectiveness, quality, production-readiness, or account-risk claims | Adoption Gate or evidence-specific review | Prevents diagnostic or partial evidence from becoming a broad claim. |
 | Toolchain or workspace dependency change affecting evidence | Design or Implementation Gate | Keeps environment drift from invalidating later runs. |
+| Operator override, exception, or manual decision application | Per-batch independent review of the exact decision file, recorded and machine-verified | Prevents unreviewed human decisions from flipping derived state; see `13-operator-decisions-and-evidence-integrity.md`. |
 
 A gate is not needed for every typo, comment, or isolated test fixture. It is
 needed when future agents, operators, users, or automation may interpret the
 change as stronger evidence or permission.
+
+## Cross-Model Gate Review
+
+An independent gate is only independent if the reviewer is a **different model
+family** than the one that authored and self-critiqued the artifact (principle
+14). Operate gates this way:
+
+- The author model runs a multi-lens **adversarial self-critique** first (cheap;
+  removes the obvious issues), then the artifact goes to a **cross-model gate**
+  for the binding verdict. Same-family agreement is weaker evidence than one
+  cross-family verdict.
+- Give the cross-model reviewer the same review packet plus the ability to
+  independently re-derive and *run* the checks (read the code, run the tests,
+  grep the artifacts) rather than trusting the packet's prose.
+- The verdict vocabulary is the same `NO-GO` / `GO WITH FIXES` / `GO`. A
+  `GO WITH FIXES` that verifies the substantive properties is the real signal;
+  apply the fixes and record it, as with any gate.
+- **For a fail-closed validator specifically** (principle 15): build it as a
+  canonical-shape **allowlist**, keep the canonical shape as a single source of
+  truth the generator emits and the checker deep-equals, and add a cross-language
+  **parity** check. Expect an adversarial cross-model reviewer to keep finding
+  ever-rarer structural edge cases (duplicate/shadowed names, unresolved graph
+  references); fix the real ones, but decide the practical stopping bar rather
+  than chasing an asymptote of inputs the generator never produces.
+- For the operational how-to — the reviewer model/reasoning/service-tier
+  configuration, the canonical one-shot invocation, the `< /dev/null` stdin rule,
+  the never-pipe-codex-through-`tail` rule, the hard timeout and read-only sandbox
+  — see the **Cross-Model Review Runbook** in `07-multi-agent-parallel-work.md`.
+  Friction to expect: the agent's own sandbox may lack a network path to the
+  external reviewer; run the gate from the human's host shell or a clean egress
+  path.
 
 ## Review Packet Quality Bar
 
@@ -88,6 +120,14 @@ Before accepting a design, check:
 - Can an agent operate it through stable APIs?
 - Are plan-only artifacts separated from execution artifacts?
 - Are evidence classes and promotion boundaries explicit?
+- Is every status enum value reachable by some input and handled by some
+  consumer branch, with the consumer's apply logic total over its input
+  combinations?
+- Do new consumers of evidence only degrade or maintain existing
+  interpretations, with any new score cap cross-checked against every cap
+  that already binds in the same state?
+- Does the design name every existing function it modifies, not only the new
+  code it adds?
 
 ## Implementation Review
 
@@ -105,7 +145,8 @@ Before merging:
 - Verify generated JSON, reports, queues, handoffs, and manifests are scanned
   for sensitive output.
 - Verify reviewed snapshots or digests prevent drift between review and
-  execution.
+  execution, and that consumers verify every recorded input digest, not a
+  subset.
 - Verify dry-run and sample artifacts cannot be interpreted as stronger
   evidence than their boundary flags allow.
 - Verify tools or dependencies discovered missing during implementation are

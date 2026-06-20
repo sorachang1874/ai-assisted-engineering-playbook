@@ -154,3 +154,25 @@ Before parallel work:
 - Define validation commands.
 - Define no-touch areas.
 - Define merge order.
+
+## Agent Failure Modes To Plan For
+
+- Output-size limits kill whole-file emitters: an agent asked to produce a
+  large precision file (hundreds of lines of fail-closed logic) can
+  repeatedly hit its per-response output cap trying to write it in one shot
+  and die without producing anything. Either instruct chunked writes
+  explicitly, scope the task smaller, or be ready for the lead to take the
+  task over directly — and check intermediate filesystem state when an
+  agent goes quiet, rather than waiting on its final message.
+- Parallel producer/consumer agents drift at the seam: when one agent
+  builds the artifact producer and another builds its consumer, pin the
+  exact shared field names in BOTH prompts, review the seam yourself at
+  merge, and add one cross-module test that feeds real producer output into
+  the real consumer (twin hand-rolled fixtures keep both suites green while
+  the interface breaks).
+- The lead's merge review is part of the work, not overhead: agents
+  faithfully implement what the spec says, including its gaps; the
+  highest-value findings after a parallel round usually sit in the
+  specified-but-unstated corners (unreachable statuses, missing
+  cross-checks), which is what the post-merge adversarial critique pass is
+  for.

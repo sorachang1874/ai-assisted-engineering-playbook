@@ -147,3 +147,88 @@ When the system depends on a generative model, the prompt and the output shape a
 production contracts. Version prompts, validate output against an explicit schema at the
 boundary, and keep records so behavior can be reviewed, compared, and rolled back. See
 `10-prompt-and-model-output-contracts.md`.
+
+## 13. Match Measurement Effort to Evidence Value
+
+Before building heavy execution scaffolding for a measurement, ask what its result is
+worth and how stable it is. Evidence that varies by region, network, provider, or time
+is low-value as a one-shot sample from a single vantage — a manual run captures one
+unrepresentative point, and the gates, approvals, and runbooks around it can cost more
+than the answer. Such measurements belong on scheduled, repeated collection from a
+representative in-region vantage, not a one-off manual execution.
+
+Practical consequences:
+
+- Decide the execution model (one-shot manual vs scheduled multi-sample, and which
+  vantage) from the evidence's variance and value, not from whichever path is easiest to
+  authorize first. Designing the cheap path first can sink real review effort into an
+  artifact that is then correctly shelved.
+- It is a valid and common outcome to fully build and gate a capability, then defer
+  executing it because the evidence is not worth the run. Record the deferral and the
+  rationale; keep the reviewed design/code/schemas as reusable inputs for the right
+  execution model later.
+- When you defer or shelve an authorized action, revert any armed boundary
+  (feature flag, permission, allowlist) to its closed state and mark the authorization
+  withdrawn. An authorization left standing for a run that will not happen is exactly the
+  hidden-open-boundary risk the rest of these principles work to prevent.
+
+## 14. Independent Review Means a Different Model
+
+A review gate whose reviewer is the same model that produced (and self-critiqued)
+the artifact inherits that model's blind spots — it tends to confirm its own
+reasoning. A genuinely *independent* gate uses a **different model family** as the
+reviewer. In practice, cross-model review repeatedly surfaces real
+false-negatives that same-model adversarial self-review does not: a fresh model
+re-derives the problem from the artifact instead of from the author's framing, so
+it catches misuse of an API, an unhandled edge case, or an over-claimed guarantee
+the author's family systematically overlooks.
+
+Practical consequences:
+
+- Route the gate review to a model from a different family than the one that
+  authored the work. Keep the author model's multi-lens adversarial self-critique
+  as a *cheaper pre-gate pass* — it removes the obvious problems before the more
+  valuable cross-model gate, but it is not a substitute for it.
+- Treat agreement between two same-family reviewers as weaker evidence than one
+  cross-family verdict. Diversity of failure modes, not redundancy, is what makes
+  a review trustworthy (this is the review analogue of perspective-diverse
+  verification).
+- Operationalizing an external-model gate from inside a sandboxed agent has real
+  friction: the agent's own execution sandbox may not have a network path to the
+  external model's backend (egress allowlists, DNS interference). Be ready to run
+  the cross-model gate from the human's host shell, or to establish a clean egress
+  path, rather than assuming the agent can call it directly. For the validated
+  invocation and the stdin/pipe/sandbox operational rules, see the Cross-Model
+  Review Runbook in `07-multi-agent-parallel-work.md` (and the gate-process
+  summary in `08-review-and-delivery-checklists.md` § Cross-Model Gate Review).
+
+## 15. Fail-Closed Validators Are Allowlists, Not Denylists
+
+When a checker must be *fail-closed* — reject every unsafe artifact, not just the
+known-bad ones — do not build it by enumerating bad patterns. A denylist never
+terminates against an adversarial reviewer: each round closes some patterns and
+reveals subtler ones (nested forms, transitive graph paths, name shadowing,
+substring-vs-token confusions), an effectively endless long tail. Instead assert
+that the artifact **exactly matches a known-safe canonical shape** (an allowlist):
+any deviation is rejected at once, closing whole classes of mutation rather than
+one pattern at a time. Switching a stalled denylist checker to a canonical-equality
+allowlist is usually the move that finally lets a fail-closed claim hold.
+
+Practical consequences:
+
+- Keep the canonical shape as a **single source of truth** that the generator
+  emits and the validator deep-equals. When the same contract is realized in more
+  than one language (e.g. a generator's in-language mirror plus an emitted script),
+  add a **parity test** that runs the emitted artifact and compares it to the
+  reference implementation, so the two cannot drift.
+- An allowlist still has a structural long tail (duplicate names, cross-namespace
+  collisions, unresolved graph references, first-match shadowing). Proving complete
+  fail-closure approaches formal verification; an adversarial cross-model gate will
+  keep sampling new exotic shapes. Decide in advance what the practical bar is —
+  "substantive fail-closed properties independently verified, with the generated
+  artifact provably canonical" is often enough — versus chasing an asymptote of
+  ever-rarer inputs the generator never produces.
+- Distinguish what the checker statically enforces from what is a runtime
+  attestation. Some safety properties (a name's runtime selection, host-level
+  behavior) cannot be settled by inspecting the artifact; label those as
+  gated attestations rather than claiming the static checker covers them.
