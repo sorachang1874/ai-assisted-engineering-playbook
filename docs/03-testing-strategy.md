@@ -70,6 +70,34 @@ If a malformed input crashes the script before it can write a blocked artifact,
 the operator loses auditability. Prefer fail-closed output with issue counts
 over unstructured exceptions for expected bad input.
 
+## Characterization Tests for Structural Refactors
+
+Before a structural refactor that is *supposed to preserve behavior* — extracting
+a module, collapsing a dispatcher to a table, moving a tick/loop into a registry,
+deleting a dead dual path — write a **golden characterization oracle** first and
+freeze it:
+
+- Pin the observable behavior the refactor must not change — call order, argument
+  shapes, summary/return slots, skip lists, raised exceptions — as an explicit
+  snapshot, not prose.
+- **Run the oracle green on the pre-refactor code too.** An oracle that only ever
+  ran against the new code proves nothing about equivalence; its whole value is
+  that it passed on the control and still passes after.
+- Treat the oracle as a **hard gate, frozen for the duration of the refactor**: do
+  not edit it to make the new code pass. If the new code disagrees, either the
+  refactor changed behavior (stop), or the oracle was wrong (fix it deliberately,
+  re-pin against the control, and note why).
+- **Mutation-check the oracle once**: reorder a step, flip a gate, drop a summary
+  field, and confirm it fails. An oracle that catches nothing is worse than none —
+  it certifies drift as safe.
+- **Route the oracle where the code actually runs.** If the logic still lives in
+  the old module, an oracle that only imports the new module passes while the real
+  path is unverified (the same-worktree blind spot, principle 14).
+
+This is the structural-refactor analogue of the regression test (principle 16):
+a regression test pins one fixed bug; a characterization oracle pins a whole
+behavior, so a "pure move" cannot quietly become a behavior change.
+
 ## Promotion Boundary Tests
 
 Any artifact that can influence a downstream decision should carry negative

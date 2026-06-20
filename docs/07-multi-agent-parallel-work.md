@@ -176,3 +176,15 @@ Before parallel work:
   specified-but-unstated corners (unreachable statuses, missing
   cross-checks), which is what the post-merge adversarial critique pass is
   for.
+- A parallel understand-map is necessary but not sufficient: a fan-out of
+  reader agents that maps the machinery, boundaries, and existing tests will
+  still miss consumers — direct-call contract tests, a second suite
+  exercising the same surface — because each reader only sees its slice.
+  Treat the map as a starting set, then run the full affected test suite to
+  surface the consumers no reader named, and fold the missed ones in before
+  claiming the change is covered.
+- A classify-then-edit sweep needs the classification verified, not just
+  produced: when one agent scouts hundreds of edit sites and labels each
+  (safe to change vs defer), have an independent pass try to *refute* each
+  "safe" label before the lead edits. A scout map that is merely "probably
+  right" mis-edits the one site that looked safe but was not (principle 17).

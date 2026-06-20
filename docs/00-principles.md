@@ -201,6 +201,25 @@ Practical consequences:
   invocation and the stdin/pipe/sandbox operational rules, see the Cross-Model
   Review Runbook in `07-multi-agent-parallel-work.md` (and the gate-process
   summary in `08-review-and-delivery-checklists.md` § Cross-Model Gate Review).
+- The blind spot a cross-model gate most reliably catches is the **same-worktree
+  blind spot**: an in-worktree reviewer — the author, or a sub-agent sharing the
+  working tree — verifies against the files as they sit, not against what a clean
+  checkout would see. It cannot notice tracked code importing an *untracked* local
+  module, an oracle or test routed only to the new file while the real code still
+  lives in the old one, or a symbol whose definition was never committed. A
+  reviewer that re-derives from a fresh checkout finds these. Make "does this
+  import and run from a clean checkout?" an explicit gate question rather than
+  assuming a green working-tree run implies a green clean-checkout run.
+- Once a class of change is *already* covered by independent adversarial
+  sub-agent verification, the cross-model gate can run as a **non-blocking
+  reference lane** instead of a blocking gate: fire it in the background
+  (read-only, scope-pinned to a base commit) while the primary verification runs;
+  proceed on the primary verdict; read and triage the cross-model result when it
+  lands — real findings fixed forward in a follow-up, false positives recorded.
+  Never roll back landed work solely because a *reference* review is still
+  pending. Destructive or non-rebuildable-asset operations keep the blocking gate;
+  the async lane never applies to them. This keeps the cross-model signal without
+  serializing every change behind an external model's latency.
 
 ## 15. Fail-Closed Validators Are Allowlists, Not Denylists
 
@@ -232,3 +251,63 @@ Practical consequences:
   attestation. Some safety properties (a name's runtime selection, host-level
   behavior) cannot be settled by inspecting the artifact; label those as
   gated attestations rather than claiming the static checker covers them.
+
+## 16. Attribute a Failure Before You Own It
+
+A test that fails after your change is not yet evidence that your change broke it.
+Before you debug, fix, or roll back, run the **control experiment**: put the code
+back to the pinned pre-change baseline (`git stash` your diff, or check out the
+base commit) and run the same failing test. If it fails identically there, the
+failure is pre-existing and your change is innocent. Attributing it to yourself
+wastes effort and can trigger a wrong "fix" that masks the real regression.
+
+The control run is cheap — re-run only the failing tests, not the suite — and
+decisive, and it is the discipline that keeps a refactor honest. A sub-agent
+reviewer will confidently blame N suite failures on a structural change; a control
+run pinned to the base commit routinely refutes most or all of them.
+
+Practical consequences:
+
+- Maintain a **known-failure budget**: a recorded list of failures already proven
+  pre-existing by control attribution. A new entry requires the control run first
+  — a failure is not "known" until it is attributed. The budget lets a
+  green-modulo-budget run count as a pass without re-litigating each failure every
+  batch, and the same set re-appearing unchanged after your edit is itself the
+  proof you added nothing new.
+- The same technique proves the *opposite* when you do change behavior: stash the
+  fix and show the regression test fails on the baseline, then passes with the fix.
+  That round-trip is what makes a regression test trustworthy rather than vacuous.
+- Distinguish "my change *caused* this" from "my change *surfaced* this" — e.g. a
+  test that only now runs because a guard began requiring a real dependency, or a
+  test-isolation artifact that a schema change exposed. Both are
+  control-attributable; the remedy differs.
+
+## 17. Prefer Deletion to Wrapping; Classify Before You Sweep
+
+When refactoring toward a single source of truth (principle 1), the first question
+for each legacy path is not "how do I wrap or adapt this?" but "is it still
+reachable at all?" A dual-code path whose branch is dead under the current contract
+is removed, not rewritten: deleting it eliminates the divergence-bug class at the
+root, and is *lower* risk than a rewrite because the deleted branch was already
+never executing. "Reduce sources of truth" is served better by deletion than by
+another compatibility layer.
+
+For a large mechanical sweep — deleting the same dead branch across hundreds of
+sites — do not trust the name or the count:
+
+- **Classify each site before editing.** A predicate's call-count is not the
+  edit-count: the same guard lives in read methods (safe to collapse) and in
+  write/mirror methods (different shape, usually deferred). A method named like a
+  reader can update-then-select. Scout and label every site — read vs write vs
+  entangled — first.
+- **Adversarially verify the classification; default to DEFER.** Have an
+  independent pass try to *refute* that each site is safe to change; only sites
+  that survive get edited. A scout map that is merely "probably right" will
+  mis-edit the one write that looked like a read.
+- **Preserve the exact observable behavior of the surviving path**, including its
+  no-row / error sentinel (`None` vs `{}` vs `[]` vs `0` vs raise). Deleting dead
+  code must be behavior-identical under the live contract — verify per batch, not
+  once per sweep.
+- Batch by cohesive group, verify each batch against its real consumers, and keep
+  the entangled minority for a later structural pass rather than forcing it into
+  the mechanical one.

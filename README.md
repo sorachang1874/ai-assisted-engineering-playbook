@@ -34,6 +34,8 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Secrets stay server-side and out of commits and logs; runtime mode comes from one central config, not scattered env vars.
 - Independent review means a different model: route the gate to a different model family than the one that authored and self-critiqued the artifact; same-model self-review shares blind spots, and cross-model review repeatedly catches false-negatives it misses.
 - Fail-closed validators are allowlists, not denylists: assert the artifact exactly matches a canonical safe shape (single source of truth, emitted by the generator and deep-equaled by the checker, with a cross-language parity test) instead of enumerating bad patterns, which never terminates.
+- Attribute a failure before you own it: re-run a post-change test failure on the pinned baseline before debugging — identical failure means pre-existing, recorded in a known-failure budget, not a regression you introduced.
+- Prefer deletion to wrapping, and classify before you sweep: remove a dead dual path instead of rewriting it; for a large mechanical sweep, scout and adversarially verify each site (read vs write) before editing, preserving the surviving path's exact no-row/error sentinel.
 
 ## Repository Map
 

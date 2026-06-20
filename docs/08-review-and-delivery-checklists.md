@@ -85,6 +85,15 @@ family** than the one that authored and self-critiqued the artifact (principle
   Friction to expect: the agent's own sandbox may lack a network path to the
   external reviewer; run the gate from the human's host shell or a clean egress
   path.
+- **Async (non-blocking) reference lane.** For a change *already* covered by
+  independent adversarial sub-agent verification, the cross-model gate can run as a
+  non-blocking reference channel rather than a blocking gate: fire it in the
+  background (read-only, `--base` pinned to a commit) while the primary
+  verification runs; proceed on the primary verdict; triage the cross-model result
+  when it lands — real findings fixed forward, false positives recorded. Never roll
+  back landed work solely because the reference review is still pending. Destructive
+  or non-rebuildable-asset operations keep the blocking gate; the async lane never
+  applies to them (principle 14).
 
 ## Review Packet Quality Bar
 
@@ -151,6 +160,13 @@ Before merging:
   evidence than their boundary flags allow.
 - Verify tools or dependencies discovered missing during implementation are
   tracked as follow-up work, not left only in chat history.
+- Before attributing any post-change test failure to the change, run the control
+  experiment: re-run the failing test on the pinned pre-change baseline. Identical
+  failure means pre-existing — record it in the known-failure budget and do not
+  "fix" it under this change (principle 16).
+- Verify the change imports and runs from a clean checkout, not only from the
+  working tree: tracked code must not import an untracked local module, and any
+  oracle or test must route to where the code actually runs (principle 14).
 
 ## Adoption Review
 
@@ -187,3 +203,6 @@ Before declaring a phase complete:
 - Migration bridge usage is zero or explicitly tolerated.
 - Metrics reflect typed causality, not heuristic timestamp pairing.
 - Residual risks are documented.
+- Any remaining test failures are accounted for by the known-failure budget, each
+  entry control-attributed to a pre-existing cause (principle 16), not silently
+  tolerated.
