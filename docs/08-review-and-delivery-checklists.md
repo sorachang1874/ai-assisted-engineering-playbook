@@ -128,6 +128,29 @@ If the packet omits known missing context, reviewers should return `GO WITH
 FIXES` or `NO-GO` depending on whether the missing context can change the
 decision.
 
+**Pair the packet with an explicit output contract — demand an exhaustive,
+severity-ranked findings list, not a verdict with two or three points.** Round count
+is dominated by reviewers that *stop enumerating once the verdict is decided*: the
+first blocking finding settles a `NO-GO`, so the review returns a handful of issues,
+you fix them, and the next pass surfaces the next handful — N rounds for what could
+have been one. Counter it in the review request:
+
+- **Exhaustiveness over verdict.** State plainly: "do not stop at the first blocking
+  issue; enumerate *every* issue you can find in this pass — the complete ranked list
+  matters more than the verdict."
+- **Severity + confidence per finding.** Require each finding tagged P0 (a real
+  leak/violation passes) / P1 (weakens a guarantee) / P2 (correctness/nit), and
+  *ran-and-confirmed* vs *doc-reasoned*, with the exact repro (mutation + command +
+  output) and the doc citation. This lets you batch-fix everything at once and weight
+  by confidence instead of round-tripping per finding.
+- **Front-load the context that prevents wrong diagnoses and re-treading.** Give the
+  reviewer the already-closed-issue list with citations (so its budget goes to novel
+  classes), the threat model / invariants, the *reviewer environment's* limits (e.g.
+  the target binaries are not installed, so behaviour is doc-grounded — say so rather
+  than letting it discover this), and which surfaces you have already audited against
+  which docs (principle 18). A coverage checklist of surfaces to sweep makes breadth
+  explicit rather than discretionary.
+
 ## Design Review
 
 Before accepting a design, check:
