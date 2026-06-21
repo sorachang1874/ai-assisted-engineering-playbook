@@ -78,6 +78,19 @@ family** than the one that authored and self-critiqued the artifact (principle
   ever-rarer structural edge cases (duplicate/shadowed names, unresolved graph
   references); fix the real ones, but decide the practical stopping bar rather
   than chasing an asymptote of inputs the generator never produces.
+- **Run a source-of-truth audit before the gate, not extra self-critique rounds**
+  (principle 18). The cross-model gate's distinctive findings are *doc-grounded* —
+  a misused config semantic, an unhandled default, a `!=`/wildcard/set spelling, a
+  last-assignment reset, or a value the upstream tool *requires* that the validator
+  wrongly rejects. Same-family adversarial rounds converge on same-family blind
+  spots and cannot surface these — they share the author's mental model and may even
+  *confirm* a wrong guard. So cap the self-critique at one or two multi-lens rounds,
+  then — before opening the gate — open the upstream reference doc for every external
+  surface the artifact inspects or emits and verify each against it. This collapses a
+  string of gate round-trips, each surfacing one doc-grounded class, into one
+  self-audit pass plus a confirming gate. When the validator is a canonical-shape
+  allowlist, the audit reduces to one question — "does the canonical shape match the
+  upstream schema?" — instead of enumerating every unsafe deviation.
 - For the operational how-to — the reviewer model/reasoning/service-tier
   configuration, the canonical one-shot invocation, the `< /dev/null` stdin rule,
   the never-pipe-codex-through-`tail` rule, the hard timeout and read-only sandbox

@@ -311,3 +311,44 @@ sites — do not trust the name or the count:
 - Batch by cohesive group, verify each batch against its real consumers, and keep
   the entangled minority for a later structural pass rather than forcing it into
   the mechanical one.
+
+## 18. Audit Against the Source of Truth Before the Gate
+
+The findings a cross-model gate (principle 14) most reliably contributes — and the
+ones a same-family adversarial self-critique most reliably *misses* — are
+**doc-grounded**: a misused API semantic, an unhandled default, a negation or
+wildcard spelling, a precedence rule. Same-family critique reasons from the
+artifact's own framing and the author model's *recollection* of how the upstream
+tool behaves; it inherits the author's mental model, so it cannot catch a place
+where that model is simply wrong about the tool. Worse than missing them, it can
+*confirm* a wrong model in the artifact's favour — "verifying" a guard that the
+upstream tool's real semantics make unnecessary or incorrect (e.g. a validator that
+rejects a config value the tool actually *requires*). Both the imagined hazard and
+its "fix" are then wrong, and no number of further same-family rounds will surface
+it because they all share the same false premise.
+
+So before spending a cross-model round-trip, **be the doc-grounded reviewer
+yourself**: enumerate every upstream surface the artifact depends on and verify each
+against the *actual reference doc*, not from memory or from re-reading the code.
+
+- **Enumerate the surfaces.** For anything that inspects or emits an external
+  contract — a config schema, CLI flags, a unit/rule file, a wire format — list the
+  fields, directives, and value forms it touches, and open the upstream doc for each.
+- **Check the four classic gaps,** which is where doc-grounded findings cluster:
+  *defaults* (an absent field is not automatically the safe value — know what the
+  tool defaults to), *negation / wildcard / set spellings* (`!= x`, `{a,b}`, `+.x`,
+  inverted sets — the unsafe form often dodges a check written for the positive
+  spelling), *precedence / last-assignment* (a later line can silently reset an
+  earlier safe one), and *required vs forbidden* (a value your validator rejects may
+  be one the tool mandates — confirm direction against the doc).
+- **Prefer the canonical-shape allowlist (principle 15) so the audit is finite.**
+  When the validator asserts an exact known-good shape, the source-of-truth audit is
+  "does the canonical shape match the upstream schema?" — one question — instead of
+  "have I enumerated every unsafe deviation?", which the docs will always extend.
+- **Know the stopping bar, and where the next finding lives.** A same-family
+  adversarial pre-pass converges fast on same-family blind spots and then chases an
+  asymptote; the *next* real class will not come from another self-critique round —
+  it comes from the docs. Cap the self-critique (one or two multi-lens rounds), run
+  the source-of-truth audit, *then* open the cross-model gate. This converts a
+  series of gate round-trips — each surfacing one doc-grounded class — into a single
+  self-audit pass plus a confirming gate.
