@@ -247,6 +247,24 @@ Practical consequences:
   "substantive fail-closed properties independently verified, with the generated
   artifact provably canonical" is often enough — versus chasing an asymptote of
   ever-rarer inputs the generator never produces.
+- **Classify each late gate finding as generator-reachable or hand-edit-only — that
+  test, not the reviewer's appetite, is what sets the stopping bar.** Once the
+  generated artifact is deep-equal-locked to the canonical, every further finding is
+  one of two kinds: a shape the generator *can actually emit* (a real defect — fix it
+  and keep going), or a shape only a *hand-edit or exotic external input* could produce
+  (the asymptote the bullet above names). If hand-edited artifacts are **not in your
+  threat model** — the generator is the sole writer and its output is canonical-locked —
+  the second kind is *out of scope*: record it as a known residual with its
+  threat-model rationale and stop, rather than spending another serial gate round
+  (principle 19) hardening the checker against an input that cannot reach production.
+  The trap is that a cross-model gate keeps surfacing *genuine* false-negatives of the
+  second kind — they are real bugs in the *checker*, so stopping feels like leaving
+  defects unfixed — but each one defends a config your threat model already excludes.
+  Write the threat model and the bar down **before** opening the gate, so a
+  "real-but-unreachable" finding reads as a stop signal, not as another round. (A gate
+  that ran ~11 rounds to clean, most of the tail closing exotic hand-edit shapes the
+  generator never emits, is the symptom this prevents — and the fix is not better
+  batching but an explicit scope decision up front.)
 - Distinguish what the checker statically enforces from what is a runtime
   attestation. Some safety properties (a name's runtime selection, host-level
   behavior) cannot be settled by inspecting the artifact; label those as
@@ -352,3 +370,71 @@ against the *actual reference doc*, not from memory or from re-reading the code.
   the source-of-truth audit, *then* open the cross-model gate. This converts a
   series of gate round-trips — each surfacing one doc-grounded class — into a single
   self-audit pass plus a confirming gate.
+
+## 19. Minimize Gate Round-Trips, Not Findings Per Round
+
+A cross-model gate round-trip (principle 14) is expensive and **serial**: minutes of
+reviewer latency, a fresh artifact bundle, and round N+1 cannot start until round N's
+verdict lands. So the cost of a gate is dominated by the *number of rounds*, not the
+number of findings in any one. The discipline is to make each round retire as much as
+possible — and the anti-pattern is the slow convergence where each round fixes exactly
+the one line the reviewer cited and re-gates.
+
+- **Front-load discovery across every surface the gate will audit.** Principle 18 says
+  audit upstream semantics before the gate; generalize it: the pre-gate self-review must
+  cover *every* surface the gate inspects, not just the mechanical validator. A
+  fail-closed checker gets adversarially hardened, but the operator runbook's *sequencing*
+  (does step 3 overwrite the file step 5 backs up?), the renderer's *side-effects* (perms,
+  atomicity, stale-file cleanup), and the *documentation's* consistency (inventories,
+  counts, cross-references) are surfaces too — and they are where the late, avoidable
+  rounds get spent. Run these as parallel self-review lenses (principle 7) — secret-leak,
+  ordering, side-effect/atomicity, fail-closed completeness, reversibility,
+  doc-consistency — and drive self-findings to zero before opening the gate. Parallel
+  local lenses are cheap; serial gate rounds are not.
+- **Treat each finding as the representative of a class, and fix the class plus its
+  ripple in one round.** Before re-gating, fix (a) every *sibling*: all the other paths
+  with the same property — every early-return that skips the cleanup, every artifact with
+  the same perms gap, not just the cited one; (b) the *ripple* of any change to a
+  canonical/emitted shape — adding, splitting, or renaming an artifact or token opens a
+  new surface the gate audits next round, so sweep it now (stale-artifact removal, perms,
+  doc inventories and summaries, counts, validation coverage, cross-references); and (c)
+  the *adjacent class* — if the gate flagged "validate the ports," also validate the CIDR,
+  the identifiers, and the empty/null case in the same pass, before it asks.
+- **Batch the long tail.** Once a gate reaches "no blockers, a handful of minor findings,"
+  stop fixing one per round. Make a single consolidated pass that closes every open
+  finding and the classes you can anticipate, then run one confirming gate. A full
+  round-trip to confirm two cosmetic fixes is a bad trade — fold them into the pass that
+  earns the approval.
+
+The failure mode this prevents is real and recurring: an atomic-publish requirement fixed
+across three separate rounds — introduce the cleanup, then learn it runs on only one
+failure path, then learn an early return skips it entirely — when a single "enumerate
+every path that must clean up, and what each leaves behind" pass in the first round would
+have closed it. The reviewer's job is to *confirm* the class is closed, not to *enumerate*
+its members for you one round at a time.
+
+## 20. Couple a Component to Its Safety Enforcement — Fail Closed When It's Absent
+
+When a component's safety depends on a *separate* enforcement mechanism — a firewall/allowlist,
+a network policy, an auth proxy, a sidecar — the dangerous failure mode is not the component
+crashing; it is the component running **normally while unprotected** because the enforcement is
+missing or failed to load. That fails *open*. Make the component **hard-depend** on its
+enforcement: it must refuse to start (or to serve) unless the enforcement is provably in effect.
+
+- Express the dependency where the runtime enforces it: a `Requires=`/`After=` (or equivalent)
+  on the enforcement, **plus a pre-start assertion that the enforcement is actually in effect** —
+  assert the specific firewall *chain/rule* (or policy) exists, not merely that the enforcement
+  *service* started. A started-but-empty enforcement is the gap a unit-level dependency alone
+  misses.
+- Write the check that proves the *negative*: with the enforcement removed, does the component
+  stay down / refuse to expose itself? Verify it (remove the enforcement, confirm no exposure);
+  don't assume it.
+- This is the deployment-time twin of the fail-closed validator (principle 15): a validator
+  fails closed on bad *input*; a service must fail closed on absent *enforcement*. Both replace
+  "assume safe" with "prove safe, or don't run."
+- A cross-model gate (principle 14) reliably catches this class, because the author — focused on
+  the happy path where the enforcement is present — systematically skips "what if the listener
+  is up but the firewall isn't?" A real near-miss it caught: a SOCKS5 landing whose daemon would
+  have started and exposed a residential exit IP to the whole internet had its firewall failed to
+  load; the fix bound the daemon to the allowlist chain's presence (`Requires=` + an
+  `ExecStartPre` asserting the chain), so a missing firewall keeps the daemon down instead.

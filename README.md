@@ -36,6 +36,8 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Fail-closed validators are allowlists, not denylists: assert the artifact exactly matches a canonical safe shape (single source of truth, emitted by the generator and deep-equaled by the checker, with a cross-language parity test) instead of enumerating bad patterns, which never terminates.
 - Attribute a failure before you own it: re-run a post-change test failure on the pinned baseline before debugging — identical failure means pre-existing, recorded in a known-failure budget, not a regression you introduced.
 - Prefer deletion to wrapping, and classify before you sweep: remove a dead dual path instead of rewriting it; for a large mechanical sweep, scout and adversarially verify each site (read vs write) before editing, preserving the surviving path's exact no-row/error sentinel.
+- Minimize gate round-trips, not findings per round: a cross-model gate round is serial and high-latency, so front-load discovery with parallel self-review lenses over every surface the gate audits, fix each finding's whole class and the ripple of any canonical change in one round, and batch the long tail into a single confirming gate instead of a round-trip per cited line.
+- Couple a component to its safety enforcement (fail closed when absent): a component whose safety depends on a separate enforcement (firewall/allowlist, network policy, sidecar) must hard-depend on it and refuse to start/serve unless the enforcement is provably in effect — assert the specific rule/chain exists, not just that the enforcement service started — so a missing enforcement fails closed (component down), not open (component running unprotected).
 
 ## Repository Map
 

@@ -91,6 +91,19 @@ family** than the one that authored and self-critiqued the artifact (principle
   self-audit pass plus a confirming gate. When the validator is a canonical-shape
   allowlist, the audit reduces to one question — "does the canonical shape match the
   upstream schema?" — instead of enumerating every unsafe deviation.
+- **Spend round-trips on classes, not lines** (principle 19). A gate round-trip is
+  serial and high-latency, so minimize the *count* of rounds, not the findings per round.
+  Make the pre-gate self-critique cover *every* surface the gate audits — not only the
+  mechanical validator but the runbook's sequencing, the renderer/generator's
+  side-effects, and the docs' inventories/counts/cross-references — run as parallel lenses
+  (principle 7) so discovery is cheap and local. Then respond to each finding by fixing
+  its whole *class* (every sibling path with the same property) and the *ripple* of any
+  canonical/emitted-shape change (stale-artifact cleanup, perms, doc inventories,
+  validation coverage, cross-refs) in the *same* round, plus the adjacent class the gate
+  hasn't asked about yet. Batch the long tail: at "no blockers, a few minor findings," do
+  one consolidated fix pass and a single confirming gate rather than a round-trip per
+  cosmetic fix. The reviewer should be *confirming* a class is closed, not enumerating its
+  members for you one round at a time.
 - For the operational how-to — the reviewer model/reasoning/service-tier
   configuration, the canonical one-shot invocation, the `< /dev/null` stdin rule,
   the never-pipe-codex-through-`tail` rule, the hard timeout and read-only sandbox
