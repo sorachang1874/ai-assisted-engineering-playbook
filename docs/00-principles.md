@@ -438,3 +438,38 @@ enforcement: it must refuse to start (or to serve) unless the enforcement is pro
   have started and exposed a residential exit IP to the whole internet had its firewall failed to
   load; the fix bound the daemon to the allowlist chain's presence (`Requires=` + an
   `ExecStartPre` asserting the chain), so a missing firewall keeps the daemon down instead.
+
+## 21. Validated Is Not Delivered — Verify at the Surface the Consumer Reads
+
+When one authored source fans out into several generated artifacts, the trap is editing — or
+validating — the *wrong copy*. A change can pass every test, checker, and pin and still never
+reach production, because the artifact your validation reads is a **different derived copy** than
+the one the consumer reads. "Validated" is not "delivered." Before treating any file as a source,
+prove it isn't a derivative; after any change, verify it at the *delivery* surface, not the
+validation surface; and make the source→derived propagation one command with a drift guard so no
+copy silently rots.
+
+- **Prove provenance before editing a file as a source.** Regenerate it to a scratch location and
+  diff against the committed one. If it reproduces, it's a *derivative* — editing it directly is
+  clobbered on the next regen, or worse, silently desyncs the copies the regen doesn't touch. The
+  real source is whatever the generator *reads*, not whatever looks hand-written. A "single source
+  of truth" refactor (principle 17) starts here: map the generation DAG before you move a line.
+- **Verify at the delivery surface.** Tests and checkers often read an intermediate artifact (a
+  merge file, a bundle); the consumer reads a different one (the rendered profile, the deployed
+  config). Grep the change in the artifact the consumer *actually* loads. A green suite on the
+  wrong copy is *validated-but-not-deliverable* — the most expensive false pass, because it looks
+  done. The real near-miss: a domain added to the merge file the checker reads passed 700+ tests
+  and the pin went up, but the operator's rendered profile — generated from a *separate* extension
+  file — never gained the domain; the "fix" shipped nothing.
+- **One command, with a drift guard.** Make propagation source→every derived copy→every pinned
+  constant a single command, and add a `--check` that regenerates to a snapshot and fails on any
+  diff (ignoring only provenance timestamps). Staleness must be *detectable*, not silent: a
+  renamed constant once sat stale in one generated copy indefinitely while the source and every
+  other copy had moved on, because nothing regenerated-and-compared. This is the fail-closed
+  validator (principle 15) applied to generated artifacts.
+- **"Single source of truth" rarely means one file.** It means one authored input with a
+  deterministic, guarded path to every copy. Flattening structured sources into one list just to
+  have "one file" can destroy semantics (match-type, grouping) the generator needs; the
+  higher-value fix is the one-command-plus-guard, not fewer files. Order the regen by dependency
+  (regenerate a pinned constant *before* the artifact that self-checks against it, or the
+  self-check fails mid-run).
