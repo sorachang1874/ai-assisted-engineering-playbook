@@ -473,3 +473,85 @@ copy silently rots.
   higher-value fix is the one-command-plus-guard, not fewer files. Order the regen by dependency
   (regenerate a pinned constant *before* the artifact that self-checks against it, or the
   self-check fails mid-run).
+
+## 22. Live Coordination Is Ephemeral; the Durable Truth Is Git
+
+When several long-lived agents work one repo concurrently (separate processes, no shared memory —
+see `14-async-multi-agent-collaboration.md`), they need a fast live channel for task claims,
+heartbeats, questions, and decisions-in-flight. Keep that channel **local and gitignored** — it
+removes every git race for co-located agents. But hold a hard line about what it *is*: the live
+channel is a **bus, not a memory**. A decision that lives only there is invisible to every agent
+that wasn't watching at that moment, and to every future instance, clone, and session.
+
+- **Promote, don't leave.** When a live decision becomes normative — a frozen contract, a ratified
+  principle, an ownership change — the author promotes the normative form to **git** (the contract
+  file, a `docs/` doc, `AGENTS.md`) and only *announces* it in the live channel. When the two
+  disagree, an agent trusts git.
+- **One durable project-status snapshot in git** is the "where is the whole project" doc every agent
+  reads at the start of every work chunk. Make "read it first" a standing rule in `AGENTS.md`, not a
+  per-prompt reminder — so a fresh instance self-orients without a human re-explaining.
+- This is the multi-agent twin of principle 21: there, a change "validated" on a derived copy never
+  reached the consumer; here, a decision "agreed" on the live channel never reaches the next agent.
+  Both fail because the artifact that was edited is not the one that gets read. Verify at the surface
+  that is actually read — and for cross-agent, cross-session memory, that surface is git.
+
+## 23. Merged Is Not Landed — Verify Integration by Content
+
+A PR shown as "merged" is not proof that a branch's work is in `main`. Squash-merge collapses a PR's
+commits into one against the PR's base *at merge time*; if the branch kept advancing, or a lower PR in
+a stack merged early, later commits can sit in **no open PR and not in main** — silently stranded, and
+easily masked because a running demo still serves from the local branch. `git --merged` ancestry is
+unreliable across squashes and will confirm the wrong thing.
+
+- **Verify by content, not by ancestry or by the squash message.** Grep `origin/main` for a marker you
+  know belongs to the work in question; that, not "the PR says merged," is what tells you the cutoff.
+- **Stop pushing to a merged branch.** Continued work goes on a fresh PR; pushing onto an
+  already-squashed branch is how work strands.
+- **After any peer's PR merges, rebase your branch on main before continuing** — long-lived parallel
+  branches drift from a stale base, and the drift surfaces as phantom conflicts or lost work later.
+- This is principle 21 ("validated is not delivered") at the merge boundary: the most expensive false
+  pass is the one that *looks* done. Confirm landed work at the delivery surface — the merged content in
+  `main` — not at the surface that merely *reports* success.
+
+## 24. Separate Diff Hygiene From Refactor Appetite
+
+Two different disciplines get conflated under "make small changes," and an agent needs them calibrated
+**separately** — because one is universal and the other is a per-project decision. Conflating them makes
+an agent either churn a stable codebase gratuitously or refuse a redesign an early-stage one needs.
+
+**Diff hygiene is universal — it holds at every maturity level.** Every changed line should trace to the
+task or to a *deliberately named* refactor; nothing else moves.
+
+- **Match the file you're editing** — its quote style, casing, indentation, import idiom. File-internal
+  consistency beats personal preference, and beats the model's training-data default. This is the same
+  failure the "write code that reads like the surrounding code" rule prevents: an LLM pattern-matches to
+  its training distribution and emits locally-plausible code that is globally inconsistent with the file.
+- **Never reformat code you didn't have to change** — no whole-file formatter run on a non-formatted
+  file, no taste-driven import reordering, no indentation churn. Reformatting buries the real change under
+  noise and makes review and `git blame` painful.
+- **No opportunistic orthogonal edits.** Fixing X does not license renaming a variable in Y or fixing a
+  typo in Z. Clean up only the mess your change *caused* (an import you just orphaned), not pre-existing
+  dead code someone else left.
+
+**Refactor appetite, by contrast, scales with codebase maturity — it is a project decision, not a
+universal rule.** The widely-circulated "minimal surgical diff, avoid early abstraction, repetition is
+cheaper than the wrong abstraction" advice is calibrated for a *stable* codebase where the architecture
+is settled and the dominant risk is gratuitous churn. An *early-stage product in active design* is the
+opposite regime: under-abstraction calcifies into duplicated, divergent logic, and restructuring a wrong
+early design is cheaper now than after it spreads. Do not import the stable-codebase defaults into an
+early one, or vice versa — name the regime, then pick.
+
+What makes aggressive refactoring *safe* in either regime is not avoiding it but **bounding** it:
+
+- A refactor is **named, scoped, and its own change/PR** — never silent scope-creep smuggled inside an
+  unrelated task. (That is the diff-hygiene rule above, enforced at the unit of work.)
+- If it touches shared semantics it is a **contract change first** (principle 1): owner, consumers,
+  deletion-condition — so an abstraction has a *named consumer and a removal path*, not a speculative
+  "maybe later" with nobody on the other end.
+- The deletion-over-wrapping and classify-before-sweep disciplines (principle 17) govern the refactor
+  itself.
+
+**The synthesis:** bold, deliberate refactoring — yes, as named bounded work; unintended, opportunistic,
+style-churning diff noise — no. Early abstraction toward an *articulated* reuse — yes, under contract
+discipline; speculative abstraction for an imagined future — no. Calibrate the first clause of each pair
+to the codebase's maturity; the second clause holds always.
