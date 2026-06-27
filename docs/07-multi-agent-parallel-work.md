@@ -1,5 +1,11 @@
 # Multi-Agent Parallel Work
 
+This doc covers the **fan-out** topology: a lead splits bounded tasks to workers (or sub-agents) and
+reads results back. For the different case of **several long-lived agents — separate interactive CLI
+processes, no shared event loop — working one repo concurrently with a human as the only merge gate**,
+see `14-async-multi-agent-collaboration.md` (live-channel-vs-git memory, lead-pulls coordination,
+verify-merged-by-content).
+
 ## When Parallel Agents Help
 
 Parallel agents help when tasks are independent and contracts are stable:

@@ -473,3 +473,42 @@ copy silently rots.
   higher-value fix is the one-command-plus-guard, not fewer files. Order the regen by dependency
   (regenerate a pinned constant *before* the artifact that self-checks against it, or the
   self-check fails mid-run).
+
+## 22. Live Coordination Is Ephemeral; the Durable Truth Is Git
+
+When several long-lived agents work one repo concurrently (separate processes, no shared memory —
+see `14-async-multi-agent-collaboration.md`), they need a fast live channel for task claims,
+heartbeats, questions, and decisions-in-flight. Keep that channel **local and gitignored** — it
+removes every git race for co-located agents. But hold a hard line about what it *is*: the live
+channel is a **bus, not a memory**. A decision that lives only there is invisible to every agent
+that wasn't watching at that moment, and to every future instance, clone, and session.
+
+- **Promote, don't leave.** When a live decision becomes normative — a frozen contract, a ratified
+  principle, an ownership change — the author promotes the normative form to **git** (the contract
+  file, a `docs/` doc, `AGENTS.md`) and only *announces* it in the live channel. When the two
+  disagree, an agent trusts git.
+- **One durable project-status snapshot in git** is the "where is the whole project" doc every agent
+  reads at the start of every work chunk. Make "read it first" a standing rule in `AGENTS.md`, not a
+  per-prompt reminder — so a fresh instance self-orients without a human re-explaining.
+- This is the multi-agent twin of principle 21: there, a change "validated" on a derived copy never
+  reached the consumer; here, a decision "agreed" on the live channel never reaches the next agent.
+  Both fail because the artifact that was edited is not the one that gets read. Verify at the surface
+  that is actually read — and for cross-agent, cross-session memory, that surface is git.
+
+## 23. Merged Is Not Landed — Verify Integration by Content
+
+A PR shown as "merged" is not proof that a branch's work is in `main`. Squash-merge collapses a PR's
+commits into one against the PR's base *at merge time*; if the branch kept advancing, or a lower PR in
+a stack merged early, later commits can sit in **no open PR and not in main** — silently stranded, and
+easily masked because a running demo still serves from the local branch. `git --merged` ancestry is
+unreliable across squashes and will confirm the wrong thing.
+
+- **Verify by content, not by ancestry or by the squash message.** Grep `origin/main` for a marker you
+  know belongs to the work in question; that, not "the PR says merged," is what tells you the cutoff.
+- **Stop pushing to a merged branch.** Continued work goes on a fresh PR; pushing onto an
+  already-squashed branch is how work strands.
+- **After any peer's PR merges, rebase your branch on main before continuing** — long-lived parallel
+  branches drift from a stale base, and the drift surfaces as phantom conflicts or lost work later.
+- This is principle 21 ("validated is not delivered") at the merge boundary: the most expensive false
+  pass is the one that *looks* done. Confirm landed work at the delivery surface — the merged content in
+  `main` — not at the surface that merely *reports* success.
