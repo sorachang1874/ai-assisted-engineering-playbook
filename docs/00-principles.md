@@ -512,3 +512,46 @@ unreliable across squashes and will confirm the wrong thing.
 - This is principle 21 ("validated is not delivered") at the merge boundary: the most expensive false
   pass is the one that *looks* done. Confirm landed work at the delivery surface — the merged content in
   `main` — not at the surface that merely *reports* success.
+
+## 24. Separate Diff Hygiene From Refactor Appetite
+
+Two different disciplines get conflated under "make small changes," and an agent needs them calibrated
+**separately** — because one is universal and the other is a per-project decision. Conflating them makes
+an agent either churn a stable codebase gratuitously or refuse a redesign an early-stage one needs.
+
+**Diff hygiene is universal — it holds at every maturity level.** Every changed line should trace to the
+task or to a *deliberately named* refactor; nothing else moves.
+
+- **Match the file you're editing** — its quote style, casing, indentation, import idiom. File-internal
+  consistency beats personal preference, and beats the model's training-data default. This is the same
+  failure the "write code that reads like the surrounding code" rule prevents: an LLM pattern-matches to
+  its training distribution and emits locally-plausible code that is globally inconsistent with the file.
+- **Never reformat code you didn't have to change** — no whole-file formatter run on a non-formatted
+  file, no taste-driven import reordering, no indentation churn. Reformatting buries the real change under
+  noise and makes review and `git blame` painful.
+- **No opportunistic orthogonal edits.** Fixing X does not license renaming a variable in Y or fixing a
+  typo in Z. Clean up only the mess your change *caused* (an import you just orphaned), not pre-existing
+  dead code someone else left.
+
+**Refactor appetite, by contrast, scales with codebase maturity — it is a project decision, not a
+universal rule.** The widely-circulated "minimal surgical diff, avoid early abstraction, repetition is
+cheaper than the wrong abstraction" advice is calibrated for a *stable* codebase where the architecture
+is settled and the dominant risk is gratuitous churn. An *early-stage product in active design* is the
+opposite regime: under-abstraction calcifies into duplicated, divergent logic, and restructuring a wrong
+early design is cheaper now than after it spreads. Do not import the stable-codebase defaults into an
+early one, or vice versa — name the regime, then pick.
+
+What makes aggressive refactoring *safe* in either regime is not avoiding it but **bounding** it:
+
+- A refactor is **named, scoped, and its own change/PR** — never silent scope-creep smuggled inside an
+  unrelated task. (That is the diff-hygiene rule above, enforced at the unit of work.)
+- If it touches shared semantics it is a **contract change first** (principle 1): owner, consumers,
+  deletion-condition — so an abstraction has a *named consumer and a removal path*, not a speculative
+  "maybe later" with nobody on the other end.
+- The deletion-over-wrapping and classify-before-sweep disciplines (principle 17) govern the refactor
+  itself.
+
+**The synthesis:** bold, deliberate refactoring — yes, as named bounded work; unintended, opportunistic,
+style-churning diff noise — no. Early abstraction toward an *articulated* reuse — yes, under contract
+discipline; speculative abstraction for an imagined future — no. Calibrate the first clause of each pair
+to the codebase's maturity; the second clause holds always.
