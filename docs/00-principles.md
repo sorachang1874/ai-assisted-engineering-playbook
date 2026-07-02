@@ -958,3 +958,52 @@ Principle 30 owns deliberate noes — rulings, with tripwires; principle 16 owns
 - **Make saving the failed attempt the path of least resistance.** The pipeline cannot depend on the model's candor about its own failures: the handoff carries a required negative-evidence field — `none` is written explicitly, a blank fails the dispatch preflight.
 - **The log is load-bearing, not archival.** Principle 38's harness loop diffs each new proposal against it before spending a run; and a failure that hardens into a decision never to retry graduates into principle 30's ledger with a tripwire — this principle owns the raw evidence beneath those rulings.
 - **Executable form:** `templates/NEGATIVE_EVIDENCE.template.md`, instantiated beside the project's residual ledger — one dated row per abandoned attempt: what was tried · model/version/date · direct cause · causal state · abstract mechanism · why abandoned; the handoff template's negative-evidence field is required (`none` allowed, blank not); `08-review-and-delivery-checklists.md`'s harness-change review diffs proposals against this file.
+
+## 40. A Gate Round May Overturn a Prior Round — Primary Sources Beat Precedent
+
+A multi-round review gate is evidence-driven, not precedent-driven. The failure mode: round 1
+suggests a fix, the author complies, and every later round treats the round-1 framing as settled
+— so a *wrong premise* gets hardened into code, tests, and comments with each round "confirming"
+the previous one. Rounds must stay free to refute earlier rounds, including the reviewer's own
+prior suggestion, when a primary source (upstream source code, the spec, the vendor's parser)
+says otherwise. Correctness beats consistency with the transcript.
+
+- **When a fix encodes a semantic claim about an external system** (an init system, a kernel
+  interface, a browser, a wire protocol), the review scope must include *verifying that claim
+  against the primary source*, not just checking the code implements the claim faithfully. A
+  fix can be internally perfect and semantically wrong.
+- **Reward the reversal, don't litigate it.** A real case: round 1 proposed modeling "an empty
+  assignment resets the dependency list" (true for most of that config format's list settings);
+  the author complied, with a red-team fixture demonstrating the "reset bypass". Round 2 — the
+  same reviewer — refuted its own round-1 premise by citing the upstream parser: *dependency*
+  directives are accumulate-only and an empty assignment is a no-op, so the "bypass" did not
+  exist and the checker's rejection message explained something false. The reversal was the
+  most valuable finding of the gate; accepting it cost one round, entrenching it would have
+  cost every future reader.
+- **Mechanically:** prompt each confirming round with the prior round's verdict *attached* and
+  an explicit license to overturn it with sources; never scope a round to "confirm the fixes"
+  so narrowly that refuting the fix's premise is out of bounds.
+
+## 41. Separate Semantic Modeling from Policy — Lint Your Preferences Explicitly
+
+When a validator encodes rules about an external system, keep two layers visibly distinct:
+**semantics** — what the system actually does, modeled faithfully with the primary source cited
+— and **policy** — what you *additionally* refuse even though the system would accept it.
+Collapsing policy into the semantic model produces validators that reject with false
+explanations ("this resets your dependency" when it doesn't), red-team fixtures that document
+nonexistent attack vectors, and future readers who learn wrong semantics from your code.
+
+- **The semantic layer is not yours to design.** Its only correctness criterion is fidelity to
+  the external system; cite the source (spec section, upstream function) in the docstring so
+  the next reader can re-verify rather than re-derive.
+- **The policy layer is yours — so say so.** Reject the suspicious-but-harmless shape (an
+  ineffective reset attempt, a no-op directive with no legitimate use) with a message that says
+  *policy*, names the shape, and says why it is suspicious — not a message that misattributes a
+  behavior to the external system.
+- **Fixtures follow the split.** A must-reject fixture for a policy lint asserts the lint
+  message, and its comment says "no-op in the real system, rejected as policy"; a fixture that
+  claims to demonstrate a real bypass must actually be one. A fixture with a false premise is
+  negative documentation — it teaches the attack that isn't.
+- Being stricter than the external system is fine (fail-closed, principle 20); *describing* the
+  external system wrongly is not. The test: could someone learn the external system's real
+  behavior from your checker's messages and comments alone? If not, the layers are merged.
