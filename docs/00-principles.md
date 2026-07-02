@@ -555,3 +555,129 @@ What makes aggressive refactoring *safe* in either regime is not avoiding it but
 style-churning diff noise — no. Early abstraction toward an *articulated* reuse — yes, under contract
 discipline; speculative abstraction for an imagined future — no. Calibrate the first clause of each pair
 to the codebase's maturity; the second clause holds always.
+
+## 25. Snapshot Gates Cannot See Trajectory Defects — Contract the Verb, Not Just the Noun
+
+A schema-validation + typecheck + review + CI pipeline verifies a VALUE's shape at a single instant, on
+one invocation, on the happy path. A whole defect class lives in the complement: behavior at **t+Δ** (a
+stored reference that was valid at write time and dead at read time), on **invocation #2** (what a
+repeated action does), on the **error branch** (what renders when a dereference fails), and in the
+**human viewport** (whether feedback was perceivable, not merely present in the DOM). These are
+*trajectory* properties — properties of behavior over time and repetition — and no point-in-time gate can
+reject them unless the contract regime reifies them as declared, enforced clauses. A real five-bug
+incident from first live user testing decomposed to exactly this: every component was locally correct and
+every gate was green; the missing facts were "this URL dies in ten minutes", "a second tap double-saves",
+and "on 404 this tile goes permanently blank".
+
+- **Contract user-facing actions as verbs, not just data as nouns.** A data contract answers "what is
+  this value?"; a verb contract answers: what does a *repeat* invocation do (idempotency — enforced at
+  the server choke point, e.g. a uniqueness key, not a client-side flag alone, because a network retry is
+  also a repeat)? through what *surface* does the user learn it succeeded (acknowledgment)? what do the
+  user and the operator each see on *failure* (the user-invisible/operator-visible split of principle 11)?
+- **The actor model is part of the spec, and an unwritten one silently defaults to the developer's own
+  behavior**: acts exactly once, perceives all feedback (which they placed, on their own screen), consumes
+  results seconds after producing them, never revisits. Real users repeat when unsure, miss feedback,
+  return after arbitrary delays, and get interrupted mid-flow. Tests derived from the spec inherit the
+  same idealized actor — so "the second click is a no-op" was never a falsifiable claim anywhere in the
+  system. Missed feedback and non-idempotent actions compound: the user who can't tell it worked is the
+  user who clicks again.
+- **The bar for each verb clause is an executable form — a failing test or a rejected write, never a
+  sentence in a template.** "Idempotent to repeat, unmissable to confirm, durable to revisit": each
+  adjective needs teeth — a double-fire test asserting exactly one effect; one blessed prominent-feedback
+  component as the only allowed confirmation surface (ad-hoc variants linted out), since perceivability
+  itself is not machine-checkable; and the lease rules of principle 26 for anything revisited later.
+- Trajectory properties are exactly the ones a fake-driven CI is structurally blind to; principle 27 is
+  how they are made testable at all.
+
+## 26. A Borrowed Reference Is a Lease
+
+Every value crossing a process or trust boundary is either **owned data** (self-contained, valid
+indefinitely) or a **borrowed reference** — a URL, token, session, handle, or cache key that points into
+someone else's resource and carries an issuer lease (a TTL, stated or not). The receiver always has a
+holding period: a render loop, component state, a database row, an email. The defect class is
+**retention > lease**, and it escapes every standard gate for three structural reasons: (1) the type
+system erases lifetime — a ten-minute URL and a permanent URL are both `string`, so review literally
+cannot see that `store(url)` is a bug; (2) the two timelines never meet in one artifact — the issuer's
+TTL lives in a vendor doc, the retention decision in a different module written weeks later, so each half
+passes review alone; (3) **every gate completes inside the lease window** — typecheck, unit, smoke, and
+demos run in seconds-to-minutes while leases run minutes-to-days, so a defect that needs wall-clock time
+greater than the pipeline's duration is invisible to every process that runs faster than the TTL.
+
+- **The rule:** a reference whose lifetime you do not control must never be written into storage or
+  long-lived state you do control. At the boundary, prove retention ≤ lease or convert:
+  **materialize** (copy the bytes into owned storage), **re-mint** (store the durable ID and sign a fresh
+  reference at read time), or **refresh** (hold the renewal credential, not the lease).
+- **Enforce by construction at one choke point, not by declaration**: a single mandated converter (e.g. a
+  write-through media proxy) plus a fail-closed write-boundary guard — the persistence layer rejects
+  reference patterns matching known ephemeral issuers (reuse the proxy's host allowlist as the source of
+  truth). Construction is robust to *unknown* TTLs, which is the defining feature of the class: the
+  incident happened because nobody knew the lease existed, and no template field can force unknown
+  knowledge.
+- Give reference-typed contract fields a closed lifetime vocabulary — `durable | request-scoped |
+  leased(ttl, expiry-strategy = materialize|re-mint|refresh)` — as a design-time prompt; but the teeth
+  live in the guard and the hostile fake (principle 27), not in the doc row.
+- Distinguish from ordinary cache staleness: a stale copy of *owned* data degrades (a wrong-ish value);
+  an expired *borrowed* reference hard-fails (no value at all). Different failure mode, different fix —
+  materialize/re-mint, not invalidate.
+- The class is everywhere: a checkout-session URL emailed for "complete your purchase later" (404s in
+  24h); an OAuth access token persisted where the refresh token belonged (everyone logged out at t+1h);
+  S3/COS presigned URLs saved into database columns or CDN configs (every avatar breaks in 7 days); DNS
+  answers cached past their TTL.
+
+## 27. Fakes Must Match Production's Hostility, Not Just Its Shape
+
+A test double is an implicit theory of which properties of the real dependency matter. CI's reward
+function — deterministic, fast, always-valid — is the pointwise negation of reality's hostile properties
+— outputs decay, responses lag, events arrive twice, calls fail mid-sequence. So kind fakes are
+*systematic drift, not carelessness*: hostility causes "flaky tests" and gets engineered out, and the
+suite ends up green not because the code handles reality but because the simulated reality contains no
+hazard to handle. Shape parity ("fake matches live response shape") is the checkable half; the
+**envelope** — how long outputs stay valid, how late they arrive, how often they repeat — lives outside
+any schema, and the defects it hides are exactly principle 25's trajectory class.
+
+- **Hostile by default**: fakes issue references that expire (after first dereference, or a count/virtual-
+  clock TTL — never wall-clock sleeps), deliver one duplicate of every event, fail a scheduled call in the
+  sequence. The escape hatch is an explicit KIND flag for debugging — never the reverse, because opt-in
+  hostility never gets turned on.
+- **Deterministic, never sampled**: scheduled hostility (every event delivered twice; call #3 fails), not
+  random 1-in-K — a random hostile leg becomes the flaky test that gets tolerated and softened, recreating
+  the kindness one level up.
+- **A hostile fake is inert without a scenario that makes it bite.** The smoke needs a *revisit leg* —
+  expire all leases at a session boundary, then re-read every persisted and displayed reference and assert
+  zero blank/broken surfaces — and a *repeat leg* — double-fire each mutating action the smoke already
+  exercises and assert exactly one effect. A fake that expires URLs nobody re-dereferences fails nothing.
+- **Keep the hostility-dimension list closed and append-only** (expiry, duplication, latency/timeout,
+  partial failure, ordering). Every production incident traced to a kind fake adds its dimension — the
+  class-level analogue of a regression test (principle 16). Waivers ("concurrency: waived — single
+  writer") carry an owner and a reason and are audited by the independent reviewer (principle 14), never
+  self-attested by the fake's author.
+- The economics that make this non-optional: fast CI *structurally* never lets a TTL elapse or a session
+  grow old. Hostile fakes exist to compress time until the trajectory fits inside a thirty-second run.
+
+## 28. A Norm Exists Only If a Machine Can Fail Because of It
+
+Human teams paper over spec gaps with scar tissue — a senior engineer "obviously" debounces the save
+button, "obviously" stores the bytes rather than the link. AI implementers build exactly the set of
+properties some executable artifact asserts, and reproduce the spec's gaps with perfect fidelity; prose
+norms bind whoever currently holds them in working memory, which across agent sessions is nobody. This
+playbook is its own case study: "freshness or TTL semantics", "failure and retry semantics", and an
+idempotency-key column all already existed here — as unenforced checklist prose — and a five-bug incident
+shipped straight through them. Prose that no machine checks is documentation of intent, not a constraint.
+
+- **The enforcement hierarchy, strongest first:** *by construction* (a choke point, a branded type, a
+  structural default that makes the wrong thing inexpressible) → *CI gate* (a test or lint that goes red)
+  → *template field* (a forced question) → *prose* (a hope). Push every norm as far up the hierarchy as it
+  will go; a norm stuck at prose should be treated as not implemented.
+- **Template fields are the weakest active form and decay fastest with AI implementers**: agents fill
+  templates frictionlessly but not truthfully — a mandatory `reference-lifetime:` row gets a boilerplate
+  "permanent" that passes the presence check while being wrong. Declarations also cannot capture *unknown*
+  hostile properties; construction (a write boundary that rejects non-durable references regardless of
+  what anyone declared) is robust to ignorance.
+- **Some properties no machine can check** — whether feedback is genuinely perceivable, whether copy is
+  age-appropriate. Do not pretend a gate covers them: give them a structural default (one blessed
+  component as the only allowed surface, ad-hoc variants linted out) plus an explicit manual-signoff line.
+  The honest gap is a named manual check; the dishonest one is a green suite that never asserted the
+  property.
+- **Corollary for postmortems:** the deliverable of a "lesson learned" is not the lesson's text but its
+  executable form — the test that now fails, the guard that now rejects, the fake that is now hostile, the
+  dimension appended to the hostility list. If the postmortem ends with prose, the class will recur.

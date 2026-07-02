@@ -32,6 +32,10 @@ Before implementation:
 - Decide whether old sources are migration-only or removed.
 - Define expected behavior during partial progress.
 - Define failure and retry semantics.
+- For every user-facing action: define repeat-invocation behavior (idempotency), the
+  acknowledgment surface, and the user/operator failure render (see "Verb Contracts" below).
+- For every reference-typed field (URL/token/session/handle): classify its lifetime —
+  `durable | request-scoped | leased(ttl, expiry-strategy)` (see "Borrowed References" below).
 
 During implementation:
 
@@ -46,6 +50,41 @@ Before signoff:
 - Prove no normal-path fallback usage.
 - Prove all public surfaces agree.
 - Prove migration bridges are blocked or explicitly tolerated.
+
+## Verb Contracts and Borrowed References
+
+Data contracts answer "what is this value?" — a snapshot question. Two further subjects need
+contracting because their defects are *trajectory* properties (principle 25) that no snapshot
+gate can see:
+
+**Verb contracts (user-facing actions).** For every action a user can trigger, the contract states:
+
+- **on-repeat:** what a second identical invocation does. Enforce idempotency at the server
+  choke point (a uniqueness key), not a client-side flag alone — a network retry is also a repeat.
+- **ack-surface:** through what surface the user perceivably learns it succeeded. Perceivability
+  itself is not machine-checkable — solve it structurally: one blessed prominent-feedback
+  component as the only allowed surface, ad-hoc variants linted out, plus a manual-signoff line.
+- **failure-render:** what the user sees and what the operator sees when it fails (the
+  user-invisible / operator-visible split).
+- **actor model:** the spec's assumed user. An unwritten one defaults to the developer's own
+  behavior (acts once, sees all feedback, consumes immediately, never revisits) — and tests
+  inherit it. Assume instead: the trigger repeats, the feedback is missed, every artifact is
+  revisited after arbitrary delay, the flow dies mid-action.
+
+**Borrowed references (lease classification).** Every reference-typed field carries a lifetime
+class from a closed vocabulary:
+
+- `durable` — owned data or a reference whose issuer guarantees indefinite validity;
+- `request-scoped` — consumed within the producing request, never stored;
+- `leased(ttl, expiry-strategy = materialize | re-mint | refresh)` — anything else.
+
+A leased reference must never be persisted un-converted (principle 26). The classification row
+is the design-time prompt; the enforcement is constructed — one mandated converter at the
+boundary plus a fail-closed write guard that rejects known ephemeral-issuer patterns — because
+the dangerous case is the TTL nobody knew about, and a doc row cannot force unknown knowledge.
+
+Each verb clause must reduce to an executable form — a failing test, a rejected write, a lint —
+or per principle 28 it should be treated as not implemented.
 
 ## Artifact-First Phase Model
 
@@ -74,7 +113,8 @@ artifact, decide:
 - visibility: public, internal, local-only, private, or secret-bearing;
 - redaction rules and sensitive-output scan scope;
 - overwrite, append-only, and retention policy;
-- freshness or TTL semantics;
+- freshness or TTL semantics — and for reference-typed fields, the lease classification above
+  (`durable | request-scoped | leased(...)`); a borrowed reference is never persisted un-converted;
 - snapshot digest or reviewed-field drift checks;
 - allowed write modes and the gate required for each mode.
 
