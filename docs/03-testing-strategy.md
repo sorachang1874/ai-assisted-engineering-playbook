@@ -30,10 +30,34 @@ For workflow-heavy systems, build toward:
 
 - Real database type used in production.
 - Real object-store behavior or a compatible stub.
-- Fake HTTP providers that implement webhook, poll, dataset download, retry, rate limit, and error semantics.
+- Fake HTTP providers that implement webhook, poll, dataset download, retry, rate limit, and error semantics —
+  **and expiry + duplicate-delivery semantics** (see "Hostile Fakes" below): shape parity alone leaves the
+  time and repetition axes untested by construction.
 - Browser runner for end-to-end UI smoke.
 - Clean data per run.
 - No shared mutable test state.
+
+## Hostile Fakes and the Revisit Leg
+
+A fake is an implicit claim about which properties of the real dependency matter, and CI's reward
+function (deterministic, fast, always-valid) is the pointwise negation of reality's hostility (outputs
+decay, responses lag, events repeat). Kind fakes are therefore systematic drift, not carelessness — and
+any defect that needs wall-clock time greater than the pipeline's duration is invisible to every gate
+unless the fake compresses time (principle 27).
+
+- **Hostile by default:** fake-issued references expire (after first dereference, or a count/virtual-clock
+  TTL — never wall-clock sleeps); every write is delivered twice; a scheduled call in the sequence fails.
+  The escape hatch is an explicit KIND flag for debugging — opt-in hostility never gets turned on.
+- **Deterministic, never sampled:** scheduled hostility (every event twice; call #3 fails), not random
+  1-in-K — a random hostile leg becomes the flaky test that gets tolerated, recreating kindness one level up.
+- **The scenario is the teeth.** A hostile fake is inert without a leg that makes it bite:
+  - *revisit leg* — after all writes, expire every lease (`fake.expireAll()` at a session boundary), then
+    re-read every persisted and displayed reference and assert zero blank/broken surfaces;
+  - *repeat leg* — double-fire each mutating action the smoke already exercises; assert exactly one effect.
+- **Append-only hostility dimensions** (expiry, duplication, latency/timeout, partial failure, ordering):
+  every production incident traced to a kind fake adds its dimension — the class-level analogue of a
+  regression test. Waivers carry an owner and reason and are audited by the independent reviewer
+  (principle 14), never self-attested by the fake's author.
 
 ## Provider Testing
 
@@ -123,4 +147,5 @@ Before manual QA, run a pre-manual gate that checks:
 - No normal-path fallback was used.
 - Recent workflow metrics are within known ranges.
 - UI does not expose contract/debug wording to end users.
-- Provider fakes match live response shape for the tested path.
+- Provider fakes match live response shape for the tested path — and live *hostility* (expiry,
+  duplicate delivery) per "Hostile Fakes" above, or carry an owned, reviewer-audited waiver.
