@@ -37,6 +37,19 @@ Use one lead agent to own:
 
 Worker agents own bounded outputs and hand off changes.
 
+### Dispatch Preflight (before fan-out)
+
+A fleet with a hard single-model dependency fails *as a fleet* — quota exhaustion mid-fan-out
+zeroes the batch instead of degrading it (principle 35). So before fanning tasks out, the lead
+asserts the model routing is declared in the checked-in routing table
+(`templates/MODEL_ROUTING.template.yaml`):
+
+- The routing table exists.
+- Every lane names a fallback.
+- No review lane's fallback resolves to the author's model family — the independence lane of
+  principle 14 is a constraint, not a preference: defer the gate visibly rather than substitute
+  the author's family and call the result independent review.
+
 ## Independent Review Gate
 
 Use a separate reviewer for gates that change contracts, evidence semantics,
@@ -146,8 +159,13 @@ Each worker handoff should include:
 - Tests run
 - Failures
 - Assumptions
+- Deviations (Assumptions' in-flight twin — empty ⇒ write `none`; each carries a regression
+  test pinning the chosen behavior, and a deviation that changes contract direction is a stop
+  condition, not a deviation; see `15-finding-your-unknowns.md`)
 - Contract changes
 - Follow-up needed
+- Model used / fallback fired? (a silent model downgrade is a hidden fallback — principle 2 —
+  so a fired fallback stays operator-visible here; principle 35)
 
 The lead agent should not rely on chat memory. It should be able to verify from files and commands.
 

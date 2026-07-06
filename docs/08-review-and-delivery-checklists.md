@@ -104,6 +104,30 @@ family** than the one that authored and self-critiqued the artifact (principle
   one consolidated fix pass and a single confirming gate rather than a round-trip per
   cosmetic fix. The reviewer should be *confirming* a class is closed, not enumerating its
   members for you one round at a time.
+- **Terminate the gate — classify each round's findings into three bins (principle 29).**
+  (a) A *new fixable class* → fix it with its siblings and ripple in one round (principle 19);
+  (b) an *already-fixed class re-cited* → the finding must point to the specific commit or gate
+  round that fixed the class; (c) a *residual unfixable under the current trust or architecture
+  model* → the finding must cite a `templates/RESIDUAL_LEDGER.template.md` entry id (principle 30).
+  A finding that can point to neither defaults to (a) and blocks; the classification is confirmed
+  by the lead or a human, never declared unilaterally by the author's agent. **Stop rule:** feed
+  the full residual ledger to each round; when a round produces only (b) and (c), stop — an
+  all-cited round resolves as "no new information — pass with recorded residuals," while any
+  finding that cites no ledger entry still blocks. An unterminated gate blocks forever or trains
+  the team to skim it.
+- **Retro-validate a new gate before it blocks (principle 32).** Pre-declare the decision rule
+  in copyable form: retro-run the gate against the two or more most recent merged, human-reviewed
+  changes; **≥ one finding the author confirms would have required a code change ⇒ the gate earns
+  its blocking posture; zero such findings ⇒ it ships advisory-only** with a re-evaluation
+  scheduled (90 days or a fixed run count). Attach the retro-run transcript to the installation
+  change and carry a retro-validation evidence reference in the review packet's gate section
+  (`templates/REVIEW_PACKET.template.md`). Retro-validation decides when a gate *starts* blocking;
+  the termination rule above decides when a given review *stops*.
+- **Diff every new-mechanism proposal against the never-do ledger first (principle 30).** Before
+  a proposed gate, automation, or architecture is argued on the merits, check it against the
+  `status: never` rows of `templates/RESIDUAL_LEDGER.template.md`; a proposal that re-raises a
+  ratified never-do is closed by the ledger entry unless it presents the reopen-evidence that
+  entry names.
 - For the operational how-to — the reviewer model/reasoning/service-tier
   configuration, the canonical one-shot invocation, the `< /dev/null` stdin rule,
   the never-pipe-codex-through-`tail` rule, the hard timeout and read-only sandbox

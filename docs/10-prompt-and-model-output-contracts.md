@@ -73,3 +73,52 @@ Batch evaluation belongs in an offline tools tier, separate from the live reques
 Provider choice, routing order, and token/cost budgets are useful abstractions but should
 stay tunable, not frozen contracts. What callers depend on is the **capability interface
 and the output schema** — not which provider answered or how many tokens it cost.
+
+## Review Verdicts Are Model Outputs Too
+
+A gate's verdict is itself a model output, so it gets the same contract discipline as any other —
+recursively (principle 31). A verdict accepted by regex anywhere in any comment ("looks like a
+GO") is forgeable three ways: by accident (a reviewer musing "this isn't a GO yet"), by stale
+copy-paste (yesterday's GO re-posted against today's diff), and by prompt injection (the diff
+under review contains the very string the parser scans for). Because the verdict often *is* the
+enforcement — the merge gate reads it — it fails closed: no compliant marker means do-not-merge
+(principle 20, applied to the recursive case where the component *is* the enforcement).
+
+### Minimal marker spec
+
+A merge-authoritative verdict comment MUST carry all of:
+
+- **SHA-bound.** An HTML marker binding the verdict to the exact reviewed commit:
+  `<!-- REVIEW-VERDICT gate=<gate-id> sha=<full-40-hex-of-reviewed-HEAD> -->`. The gate re-reads
+  current HEAD and rejects the verdict if the SHA does not match — a verdict is about one specific
+  tree, never "the PR" in general.
+- **Machine verdict marker, anchored to the last line.** The decision is the **last non-empty
+  line**, matched anchored, not scanned from the body: `REVIEW-VERDICT: GO` |
+  `REVIEW-VERDICT: GO-WITH-FIXES` | `REVIEW-VERDICT: NO-GO`. Anchoring is what stops a verdict word
+  elsewhere in the prose from being read as the decision.
+- **Nonce-fenced untrusted data.** Any content quoted from the change under review (diff hunks,
+  logs, the author's own text) is fenced with a per-review random nonce
+  (`<<<UNTRUSTED-{nonce}>>> … <<<END-UNTRUSTED-{nonce}>>>`); the parser ignores any marker found
+  inside the fence. Injected text cannot forge a marker whose nonce it cannot predict.
+- **Identity-restricted poster.** Only the designated reviewer identity (the gate's bot account,
+  or a signed commit status) emits a merge-authoritative verdict; a verdict-shaped comment from any
+  other identity is advisory text, not a gate result.
+- **Fail-closed parse.** Any comment that is not exactly compliant — missing marker, unmatched
+  SHA, verdict not on the anchored last line, wrong poster — resolves to **NON-COMPLIANT ⇒
+  do-not-merge**, never to a permissive default.
+
+A conforming verdict comment is in `examples/cross-review-verdict-example.md`.
+
+### Must-reject fixtures
+
+The verdict parser ships with fixtures it must reject — the recursive form of "output is
+validated, not trusted":
+
+- **Verdict quoted in prose** — "I'd call this a GO once the tests pass," with no anchored
+  last-line marker ⇒ reject (no decision was emitted).
+- **Stale SHA** — a well-formed `GO` whose marker SHA is an earlier commit than current HEAD ⇒
+  reject (the approval is for a tree that no longer exists).
+- **Truncated diff** — a verdict whose covered-range/diff digest does not match the full diff
+  under review ⇒ reject (the reviewer did not see all of it).
+- **Missing marker** — a thorough, plausible review carrying no `REVIEW-VERDICT` marker at all ⇒
+  reject, fail-closed (do-not-merge), not "probably fine."

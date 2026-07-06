@@ -12,6 +12,20 @@ What should not be changed?
 
 Files, contracts, docs, and recent decisions the agent must read.
 
+- Reference implementations (working code whose semantics to match, even in another language):
+
+## Blindspots
+
+Required (`docs/15-finding-your-unknowns.md`). If this brief covers territory the author has
+personally worked, write `none — territory known by author` — never leave it blank, because the
+cure for an unknown known is a form with a blank that will not stay blank. Otherwise run a
+blindspot pass before this brief freezes and fold the findings into Context, Constraints, and
+Stop Conditions:
+
+- Prior art:
+- This repo's conventions:
+- Known pitfalls:
+
 ## Affected Areas
 
 - Modules:
