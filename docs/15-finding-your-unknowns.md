@@ -61,13 +61,15 @@ Three consequences fall straight out of the grid:
   decisions sat unmade for two weeks, blocking contract freezes and two full work lanes, while
   engineering polished features — because no board tracks "waiting for a human yes/no" as work.
   Known unknowns of this kind go into an explicit decision queue with an owner, a deadline, and
-  a pre-built decision card each — the decision-as-work-item discipline is principle 34; the
-  card template is `templates/DECISION_CARD.template.md`, and the queue's landing point (where
-  the rows live, and their required fields) is defined in
-  `13-operator-decisions-and-evidence-integrity.md` § The Decision Queue. (That doc also owns
-  the stricter, machine-verified regime for decision *files* that automation consumes — a
-  different, harder contract than the queue.) The faster agents make implementation, the more
-  throughput is governed by human decision latency.
+  a pre-built decision card each — the decision-as-work-item discipline, including the queue's
+  landing point (a `decisions/` directory or a fixed status-board section, with an owner and a
+  deadline per row), is principle 34; the card template is
+  `templates/DECISION_CARD.template.md`.
+  (`13-operator-decisions-and-evidence-integrity.md` owns a different, harder contract: the
+  machine-verified regime for decision *files* that automation consumes — the queue governs
+  getting a decision made, that doc governs what it must look like once machines depend on it.)
+  The faster agents make implementation, the more throughput is governed by human decision
+  latency.
 - **Unknown unknowns are why unfrozen contracts must not be fanned out over** (the "when
   parallel agents hurt" list in `07-multi-agent-parallel-work.md`): parallel workers crossing
   the same unknown guess *differently*, and every branch looks done but does not integrate.
@@ -245,7 +247,7 @@ Finding an unknown is a lesson; land it where a machine can fail because of it:
 | Unknown discovered… | Becomes | What fails if it doesn't |
 | --- | --- | --- |
 | in a blindspot pass or brainstorm, pre-dispatch | a brief Constraint/Stop Condition or a contract cell; scope changes become tracked work items (principle 10) | the design gate rejects a plan whose matrix has the blank |
-| in an interview, at design time | a filled owner-matrix / verb-contract cell, or a recorded decision in the queue | contract preflight; the decision queue (`13-operator-decisions-and-evidence-integrity.md` § The Decision Queue) shows an open row missing owner or deadline |
+| in an interview, at design time | a filled owner-matrix / verb-contract cell, or a recorded decision in the queue | contract preflight; the decision queue (principle 34) shows an open row missing owner or deadline |
 | mid-flight, as a deviation | a Deviations entry plus a regression test pinning the chosen behavior (proven non-vacuous per principle 16) | handoff review flags a changed plan with an empty Deviations section; unpinned behavior drifts silently |
 | by a reviewer | a failing-first test, lint, or fail-closed guard (principle 28); temporal ones become a hostility dimension in the fakes (principle 27) | the next same-class defect passes CI |
 | at the merge quiz | a blocked merge; each failed question converts to a tracked work item (principle 10) — often a doc update (principle 7) or a naming/structure fix | the review-packet checklist rejects a packet missing its "Merge quiz" field, or carrying a failed question with no tracked item |
