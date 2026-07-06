@@ -681,3 +681,240 @@ shipped straight through them. Prose that no machine checks is documentation of 
 - **Corollary for postmortems:** the deliverable of a "lesson learned" is not the lesson's text but its
   executable form — the test that now fails, the guard that now rejects, the fake that is now hostile, the
   dimension appended to the hostility list. If the postmortem ends with prose, the class will recur.
+
+## 29. Review Converges to an Asymptote — Give Every Gate a Termination Criterion
+
+An independent review gate (principle 14) run repeatedly over the same artifact does not converge
+to zero findings; it converges to an **asymptote of residuals**. Principle 15 drew this line for
+fail-closed validators (generator-reachable findings versus hand-edit-only ones, with the threat
+model written down before the gate opens); principle 18 drew it for the same-family self-critique
+pre-pass; this principle generalizes the terminator to any gated artifact — including the case
+where the residual is architectural, a trust-model fact, rather than threat-model-excluded. Once
+the fixable classes are exhausted, every further round re-derives the same architectural residual
+in new phrasing, because an LLM reviewer is rewarded for producing findings and has no natural way
+to say "done." We learned this when a security gate reviewed its own installation change: nine
+verdict rounds in a single day, of which rounds three through nine each re-discovered — in
+different words — the one residual that had already been explicitly accepted (a reviewer sharing
+the author's credentials can be self-signed), a fact no amount of re-review could change. An
+unterminated gate either blocks indefinitely or gets habitually skimmed; both destroy the gate.
+
+- **Classify each round's findings into three bins, with a declared adjudicator — and stop on the
+  rule.** (a) A *new fixable class* — fix it with its siblings and ripple in one round
+  (principle 19). (b) An *already-fixed class re-cited* — evidence about reviewer noise, not about
+  the artifact; to earn this bin a finding must point to the specific commit or prior gate round
+  that fixed the class. (c) A *residual that cannot be closed within the current trust or
+  architecture model* — to earn this bin a finding must cite a residual-ledger entry id
+  (principle 30). A finding that can point to neither defaults to (a) and blocks; the
+  classification is confirmed by the lead or a human, never declared unilaterally by the author's
+  agent. When a round produces only (b) and (c), stop iterating — past the asymptote, further
+  rounds burn budget, add no information, and train the team to discount a gate whose tenth,
+  genuinely novel finding then gets skimmed. These adjudication rules are checklist lines in
+  `08-review-and-delivery-checklists.md` § Cross-Model Gate Review.
+- **Make the terminator executable — the ledger diff is semantic, so force citation by id.**
+  Residuals come back re-derived in new phrasing, so no text diff can match them; instead, the
+  gate run feeds the full residual ledger (`templates/RESIDUAL_LEDGER.template.md`, principle 30)
+  to the reviewer as input and requires every finding classed as residual to cite a ledger entry
+  id. A round whose every finding cites a matching entry resolves as "no new information — pass
+  with recorded residuals" instead of blocking; any finding that cites no entry still blocks.
+  Termination is a stop rule, not a waiver.
+- Pair this with principle 32: retro-validation decides when a gate *starts* blocking; the
+  termination criterion decides when a given review *stops*. Both replace enthusiasm and fatigue
+  with a pre-declared, measurable decision.
+
+## 30. A Deliberate No Is a Ledger Entry With a Tripwire
+
+A correct finding you deliberately do not fix does not disappear — and with memoryless reviewers it
+does not even stay quiet. Fresh agent sessions, new audits, and every future gate round re-surface
+the same true-but-accepted finding at full cost, and a human burns credibility re-explaining a
+decision that was already made. The known-failure budget (principle 16) institutionalizes
+acceptance for test failures; generalize it to every deliberate "no": accepted review residuals,
+deferred or frozen features, automation declined, architectures rejected. Each becomes a **ledger
+entry** — what was accepted, why, and what the correct fix would be — plus a **tripwire**: the
+measurable condition under which the acceptance expires and the fix becomes mandatory. The ledger
+is a checked-in, machine-checkable artifact — `templates/RESIDUAL_LEDGER.template.md` fixes the
+columns: id, scope (which gate or artifact), what was accepted, why, the correct fix, the
+tripwire, owner, date. Subsequent reviews then diff against the ledger instead of relitigating it.
+This is principle 13's build-then-defer given an expiry — and per principle 13, any armed boundary
+is reverted to its closed state while the tripwire waits.
+
+- **Every deliberate no carries its own expiry.** An accepted security residual gets a trigger like
+  "more than one semi-autonomous agent, or any external contributor" — the acceptance was scoped to
+  a threat model, so its expiry is that model's boundary. This is principle 1's deletion condition
+  applied to decisions instead of code.
+- **Defers and freezes need both a light-up and a kill condition, written into the tracking item.**
+  "Frozen" without conditions is unstable: maintenance leaks in, the freeze drifts back to keep,
+  and the same audit has to re-run from scratch months later. A written pair ("re-activate when X;
+  delete if nobody has used it 30 days past its window") turns each defer into a self-executing
+  future decision instead of a recurring debate — and gives the next audit a diffable baseline.
+- **Grow automation by pre-committed tripwires, and keep a ratified never-do list in the same
+  ledger.** Machinery is nearly free for agents to build and never free to own; decide in advance
+  what evidence justifies the next tier ("LLM triage only after three real misroutes"; "a hard CI
+  gate only after the advisory digest is ignored twice"), and record with equal weight what you
+  will *never* build and why — otherwise every new agent re-proposes the rejected architecture,
+  forever. Never-do items are ledger entries with status `never` plus ratified-by and date fields,
+  and `08-review-and-delivery-checklists.md` requires any new-mechanism proposal to diff against
+  the never-do entries before it is argued on the merits.
+- **Calibrate the conditions themselves.** Tripwires can be drawn wrong; attach a metric that says
+  so (e.g. "if post-hoc human vetoes of the advisory tier exceed 20%, the tier boundary is wrong").
+- **An entry without a tripwire is prose (principle 28)** — unbounded acceptance is forgetting with
+  a paper trail. The fixed-column format makes this lintable: tripwire is a required column, and a
+  minimal preflight lint (an entry missing its tripwire exits nonzero) runs with the other fast
+  checks (principle 3).
+
+## 31. A Gate Must Guard Its Own Control Plane — and Safety Tooling Gets No Wrap-Up Sweeps
+
+The files that implement a gate — detector code, policy document, setup scripts, verdict parser —
+are the highest-leverage attack and decay surface in the repository: a change that edits them can
+weaken the gate without touching any path the gate protects, and routine maintenance ("just
+tooling", "just docs") walks through that hole innocently. A cross-model review caught exactly
+this class: a gate-installation change whose mechanical protected-path list omitted the gate's own
+detector script, sweep tool, and policy document — all three modified by the very change under
+review, and each able to weaken or obscure the gate.
+
+- **Enumerate the gate's own files inside its own protected set**, and prove it with a synthetic
+  test: a change touching only the detector must trip the gate. A gate that does not guard itself
+  gets silently disarmed by maintenance long before any attacker tries.
+- **Declare one side the source of truth between detector code and policy prose**, and check the
+  other against it — otherwise the two drift and the prose becomes a lie about what is enforced.
+  This is principle 21's derived-copy problem, playing out between code and documentation.
+- **No confidence-driven touch-ups to safety tooling at wrap-up.** The riskiest edits are the
+  untested "while I'm at it" hardenings made while closing out a task — precisely the code whose
+  failure modes are platform-specific and unexercised by local checks. In one gate's history, a
+  commit fixed a BSD `mktemp` trap (a template suffix after the `X`s is taken literally, so the
+  "random" temp name isn't random at all); the very next commit — a wrap-up "tighten temp-file
+  permissions" security sweep — reintroduced the identical bug. Hardening commits get feature-grade
+  test discipline: if you cannot test the edit here, do not make it here. This is diff hygiene
+  (principle 24) applied to the one class of file where a harmless-looking improvement can disarm
+  a gate. (Both this pitfall and the self-protection gap above are rows in the Pitfall Log of
+  `13-operator-decisions-and-evidence-integrity.md`.)
+- **Fail-closed construction is the last line, and it will be needed.** The reintroduced bug's
+  damage was bounded only because the gate cannot pass what it cannot parse: no machine-readable
+  verdict means do-not-merge. This extends principle 20 to the recursive case — when the component
+  *is* the enforcement, there is no outer mechanism to hard-depend on, so fail-closed construction
+  is all that survives an agent editing the gate under time pressure.
+- **The verdict a gate emits is itself a model-output contract (principle 12), applied
+  recursively** — SHA-bound, machine-markered, anchored-parse, injection-fenced,
+  identity-restricted, fixture-tested; a verdict accepted by regex anywhere in any comment is
+  forgeable by accident, by stale copy-paste, and by prompt injection. The full mechanics, the
+  minimal marker spec, and the must-reject fixtures live in
+  `10-prompt-and-model-output-contracts.md` § Review Verdicts Are Model Outputs Too, with a
+  conforming example in `examples/cross-review-verdict-example.md`.
+
+## 32. A Gate Earns Veto Power on Ground Truth — Retro-Validate Before It Blocks
+
+New review gates get adopted on faith, and faith resolves in one of two bad ways: the gate blocks
+without proven value and gets resented, or it emits noise and gets ignored. Before a new gate is
+allowed to block anything, **falsify it**: run it retroactively against artifacts that already
+passed your best existing process — merged, human-reviewed changes — and check that it yields real,
+non-trivial findings rather than silence or noise. This is principle 16's control experiment
+pointed at the reviewer instead of the test suite: known-good history is the baseline, and the
+gate's signal is measured against it *before* the gate acquires power.
+
+- **Pre-declare the decision rule before the run, in copyable form.** The rule that worked:
+  retro-run the gate against the two or more most recent merged, human-reviewed changes; at least
+  one finding the author confirms would have required a code change ⇒ the gate earns its blocking
+  posture; zero such findings ⇒ it ships advisory-only, with a re-evaluation scheduled (90 days or
+  a fixed number of runs). "Author-confirmed, code-change-requiring" is the operational line
+  between real and trivial, and declaring both branches in advance is what stops the result from
+  being argued into whatever the author wanted.
+- **The retro-run is the gate's acceptance test, and it is nearly free**: no live traffic, no
+  waiting for the next incident — the history already exists. When we retro-ran a new merge gate
+  over two already-merged, human-reviewed changes, it surfaced real defects in both (a save path
+  that bypassed a freshly built fallback; a read-before-write idempotency race; an undocumented
+  change to shared semantics) — so its blocking authority was activated on evidence, not
+  enthusiasm.
+- **Attach the transcript to the installation change.** The gate's authority should be auditable by
+  anyone who later wants to revoke or extend it; "it found these real defects in code our best
+  process had already passed" is the durable answer to "why does this thing get to block me?" The
+  transcript lives in the installation PR's description or under `examples/`, and the review
+  packet's gate section carries a retro-validation evidence reference
+  (`templates/REVIEW_PACKET.template.md`).
+- Pair with principle 29: retro-validation decides when a gate starts blocking; the termination
+  criterion decides when a given review stops — both are pre-declared checklist lines in
+  `08-review-and-delivery-checklists.md` § Cross-Model Gate Review, which also fixes where the
+  gate sits in the delivery flow.
+
+## 33. Review Machinery Manufactures Work for Itself — Someone Must Keep the Total-Cost Ledger
+
+Ask a multi-lens audit — or any standing reviewer — to judge a product surface and it structurally
+outputs "keep everything, improve everything": every lens sees some value, no lens is charged with
+the total cost of ownership, and LLM reviewers amplify the bias because they are rewarded for
+findings and findings are almost always additive. A six-lens audit of forty-four features produced
+zero deletions and fifteen-plus new tickets; only a deliberately opposed adversarial pass — a
+deletion advocate chartered against a protect-the-core advocate — converted that into two real cuts
+and eleven defers and freezes. Treat "0 cuts, +N tickets" as a red flag about the audit itself, not
+as a fact about the product.
+
+- **Name the accountant.** One explicit role — a human or an adversarially-chartered critic — sums
+  the maintenance tax across all the keeps and is rewarded for deletions and freezes. Executable
+  form: `templates/AUDIT_SYNTHESIS.template.md` requires a cuts-and-freezes count, a summed
+  cost-of-ownership line, the reversal log, and the cut-critic's sign-off; its built-in self-check
+  question — zero cuts plus net-new tickets without the cut-critic's explicit concurrence — fails
+  the audit's own acceptance.
+- **Run opposed charters and record the verdict reversals.** Let two critics with opposite mandates
+  attack the same synthesis; write outcomes as explicit reversals with the losing argument
+  preserved (the reversal log is a required section of the same synthesis template), and label
+  unresolved disagreements with a recommendation. The reversal log is the audit's highest-value
+  output — it is what makes the audit auditable by the human who has to decide. This is
+  independence of *objective*: the incentive-side complement of principle 14's independence of
+  model family.
+- Pair with principle 34: the same audit that manufactures keep-everything output is also where the
+  untracked queue of human rulings surfaces — audit for that queue deliberately, because no lens is
+  chartered to see it either.
+
+## 34. The Bottleneck Is a Queue of Human Rulings — Decisions Are Work Items
+
+Once agents accelerate implementation, throughput is often governed not by engineering but by
+human sign-off latency on zero-engineering decisions: product boundaries, quota values, policy
+scope. Because decisions are not "work items", no engineering board shows them on the critical
+path — so audit for them deliberately. The audit of principle 33 found effort flowing to polish
+for unconfirmed future features while a weeks-old queue of yes/no decisions gated fifteen-plus
+engineering tasks and two work lanes — and three actively-bleeding defects (signed URLs already
+expiring in production, a public deployment with no spend gate, zero database backups) sat
+unstaffed. This extends principle 10 from missing tools to missing **rulings**: a pending human
+decision is a missing input, and missing inputs are tracked work items.
+
+- **Make the decision queue a first-class artifact** — an owner, a deadline per item, and a visible
+  landing place (a `decisions/` directory or a fixed section of the project status board) that the
+  next audit can diff; schedule a decision session rather than letting the queue drain by chance.
+- **Pre-build a decision card for every queued ruling** so the human spends minutes per decision,
+  not days. Required fields (`templates/DECISION_CARD.template.md`): the single question to be
+  answered, the options with the evidence for each, a recommendation, the deadline, the default
+  that fires on timeout, and who decides.
+- **A ruling that automation will consume gets the stricter regime** — hand-authored decision
+  files with value and generation binding, machine-validated per batch; see
+  `13-operator-decisions-and-evidence-integrity.md`. The queue and its cards govern getting the
+  decision *made*; that document governs what the decision must look like once machines depend
+  on it.
+
+## 35. A Fleet With a Hard Single-Model Dependency Fails as a Fleet — Declare Per-Lane Fallback
+
+Any fleet with a hard single-model dependency fails *as a fleet*: when a ten-agent audit fan-out
+hit model-quota exhaustion mid-run with no fallback declared, nine of ten agents died and the
+batch produced nothing. It did not degrade — it zeroed. A degraded batch is reviewable and
+salvageable; a zeroed batch is a rerun. So every routed lane pre-declares a designated alternate,
+and quota exhaustion triggers automatic per-agent fallback instead of a dead stop.
+
+- **The routing table is a checked-in artifact (principle 22).**
+  `templates/MODEL_ROUTING.template.yaml` holds one row per lane, each naming its primary model,
+  its designated fallback, and its constraints — including a review lane's prohibition on falling
+  back to the author's family, and the declared behavior on quota exhaustion (degrade versus
+  explicit defer). Routing decided in chat at dispatch time gets re-decided — differently — by
+  every future dispatcher. The dispatch checklist in `07-multi-agent-parallel-work.md` asserts
+  three things before fan-out: the table exists, every lane names a fallback, and no review route
+  resolves to the author family.
+- **Record every fallback in the handoff** so quality drift stays operator-visible — the handoff
+  artifact carries a *model used / fallback fired?* field. A silent model downgrade is a hidden
+  fallback (principle 2): the work looks done, but the workhorse quietly did the reasoning lane's
+  job. Same rule as every degraded path — invisible to the flow, visible to the operator
+  (principle 11).
+- **The independence lane is a constraint, not a preference.** The fallback for a cross-model
+  review lane must never resolve to the author's model family — defer the gate visibly (and let the
+  residual ledger of principle 30 record the skip) rather than silently substitute the author's
+  family and call the result independent review.
+- **The specific task-nature assignments are project policy, not principle.** Routing
+  reasoning-dense work (planning, research, review, audit) to the deepest reasoner and
+  execution-dense work (writing code and tests, mechanical migration) to the high-throughput
+  workhorse is the current table's content — date the assignments and revisit them as models
+  change. What this principle fixes is only that the table exists, is checked in, and carries a
+  fallback clause for every lane.

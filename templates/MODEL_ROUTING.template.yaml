@@ -1,0 +1,49 @@
+# Model routing table — a checked-in artifact, not a chat decision (principle 35).
+#
+# A fleet with a hard single-model dependency fails AS a fleet: when a fan-out hits model-quota
+# exhaustion with no fallback declared, the batch zeroes instead of degrading. So every routed
+# lane pre-declares a designated alternate here, and quota exhaustion triggers per-agent fallback
+# instead of a dead stop.
+#
+# The dispatch preflight in docs/07-multi-agent-parallel-work.md asserts, before fan-out:
+#   (1) this table exists;
+#   (2) every lane names a fallback;
+#   (3) no review lane's fallback resolves to the author's model family.
+# Every fired fallback is recorded in the handoff artifact
+# (docs/07-multi-agent-parallel-work.md § Handoff Artifact: "model used / fallback fired?"),
+# so a silent model downgrade cannot become a hidden fallback (principles 2, 11).
+
+schema_version: model_routing.v0
+
+# Task-nature assignments are project policy, not principle: reasoning-dense work (planning,
+# research, review, audit) to the deepest reasoner; execution-dense work (code, tests, mechanical
+# migration) to the high-throughput workhorse. DATE the assignments and revisit as models change.
+# The principle only fixes that the table exists, is checked in, and every lane has a fallback.
+assignments_dated: "2026-07-06"
+revisit_when: "model lineup changes, or any lane's fallback fires more than <N> times per week"
+
+lanes:
+  - lane: planning
+    nature: reasoning-dense
+    primary: "<deepest-reasoner-model>"
+    fallback: "<next-best reasoner>"
+    on_quota_exhaustion: degrade          # degrade | defer
+    constraints:
+      - none
+
+  - lane: review                          # cross-model gate (principle 14) — independence lane
+    nature: reasoning-dense
+    primary: "<reviewer-family model, a DIFFERENT family than the author>"
+    fallback: "<another non-author family>"
+    on_quota_exhaustion: defer            # defer the gate visibly; never substitute the author family
+    constraints:
+      - "review lane: fallback MUST NOT resolve to the author's model family"
+      - "on defer, record the skipped gate in templates/RESIDUAL_LEDGER.template.md (principle 30)"
+
+  - lane: implementation
+    nature: execution-dense
+    primary: "<high-throughput-workhorse>"
+    fallback: "<second workhorse>"
+    on_quota_exhaustion: degrade
+    constraints:
+      - none
