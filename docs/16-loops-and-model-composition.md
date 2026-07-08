@@ -233,8 +233,8 @@ what evidence admits a mechanism change.
   tried and abandoned, rejected mechanism candidates, dead-end prototypes. Give it a home and a row
   format: `templates/NEGATIVE_EVIDENCE.template.md`, instantiated next to the repo's residual
   ledger — one row per abandoned attempt: what was tried · against which model/version/date ·
-  surface error · causal state · causal mechanism · why abandoned. Example row:
-  `2026-06-17 · structured tool-output streaming on <model X, 2025-12 rev> · surface: JSON
+  direct cause · causal state · abstract mechanism · why abandoned. Example row:
+  `2026-06-17 · structured tool-output streaming on <model X, 2025-12 rev> · cause: JSON
   truncated near 4k tokens · state: provider output cap hit mid-object · mechanism: hard provider
   cap, not a schema fault · abandoned: cap not configurable; recheck on next model rev`. And "path
   of least resistance" is itself a mechanism, not a wish: the handoff artifact gains a required
@@ -344,7 +344,8 @@ the cure for an unknown known is a form with a blank that will not stay blank.
       the highest gate — the level only a human ruling can pass.
 - [ ] Mechanism changes are accepted only on held-in + held-out no-regression; no only-guard is
       deleted before its successor exists; rejected candidates are logged.
-- [ ] Failure records capture causal state and causal mechanism, not the surface error; negative
+- [ ] Failure records capture all three depths — direct cause, causal state, abstract mechanism — not
+      the surface symptom alone; negative
       evidence lands as dated rows in the repo's `NEGATIVE_EVIDENCE.md` (or the literal `none` in
       the handoff's `negative-evidence:` field); capability negatives expire; hardened negatives
       promote to the residual ledger as `never` rows.
