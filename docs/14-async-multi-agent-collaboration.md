@@ -72,7 +72,7 @@ agents plus a human do not need lease machinery; they need clear ownership and a
 ```
 .coord/                 # gitignored, local, both instances read/write the same path
   README.md             # the rules in brief (read first)
-  BOARD.md              # mutable task table: task-id | owner | status | branch/PR | verify | note
+  BOARD.md              # mutable task table: task-id | owner | status | branch/PR | verify | expected-done | note
   status-<agent>.md     # one per agent; an agent writes ONLY its own (heartbeats never collide)
   log/
     NNN-<author>-<kind>.md   # append-only ledger; never edit a published entry
@@ -91,6 +91,10 @@ Conventions that prevent the races:
 - **Per-task `verify:` on the board.** Every task row carries the objective command/criteria that
   closes it, so an agent can self-terminate and the human can audit "done" without reading the diff.
   (This is the per-task instance of the global definition-of-done evidence gate.)
+- **Per-task `expected-done:` on the board.** Every row carries a predicted completion time; the
+  sweep checks a running loop against it, so a stalled or drifting loop is sweep-visible rather than
+  quietly dead (principle 36; `16-loops-and-model-composition.md`). A row past its `expected-done`
+  with no closing `verify:` is the sweep's cue to inspect, not to wait.
 - **A request template so a cross-agent ask is actionable in one read.** A cross-boundary request
   carries: *what is needed · why · the exact file/contract · a suggested change · the single decision
   the lead must make*. A vague "can you look at this?" costs a round-trip; a precise patch-shaped ask
@@ -160,8 +164,8 @@ that the separate-process reality does not actually deliver.
       standing rule.
 - [ ] Lead pulls (gh + filesystem); the human only pings and merges. A scheduled self-sweep keeps the
       lead current.
-- [ ] Per-agent status files; append-only log with global monotonic numbering; per-task `verify:`;
-      a patch-shaped request template; periodic archival.
+- [ ] Per-agent status files; append-only log with global monotonic numbering; per-task `verify:`
+      and `expected-done:`; a patch-shaped request template; periodic archival.
 - [ ] Contracts frozen before fan-out (slice by slice for refactors, with a double-run equivalence test
       and a deletion gate for any transitional compatibility layer).
 - [ ] After a peer merges, rebase on main; verify any squash captured the intended content by grepping

@@ -128,6 +128,17 @@ family** than the one that authored and self-critiqued the artifact (principle
   `status: never` rows of `templates/RESIDUAL_LEDGER.template.md`; a proposal that re-raises a
   ratified never-do is closed by the ledger entry unless it presents the reopen-evidence that
   entry names.
+- **A harness/mechanism change passes a double evidence gate — held-in AND held-out (principle 38;
+  `16-loops-and-model-composition.md`).** First ask: *does this change touch a signal some loop
+  optimizes against? — then that loop's own outputs are inadmissible as the change's evidence.* A PR
+  that edits CI, a gate, a rubric, a judge model, or any harness machinery carries two evidence
+  fields — **held-in** (the targeted weakness is actually fixed) and **held-out** (a signal the loop
+  never observed while iterating confirms nothing else broke); "the targeted test now passes" is
+  half an acceptance criterion, never all of it. A deletion or replacement of a system's *only*
+  regression guard with no named successor guard fails review — the successor guard lands first. And
+  before the change spends a run, its proposal is diffed against `templates/NEGATIVE_EVIDENCE.template.md`
+  (principle 39) as well as the never-do ledger above: a loop that re-proposes its own dead ends is
+  stopped exactly as a new agent re-proposing a rejected architecture is.
 - For the operational how-to — the reviewer model/reasoning/service-tier
   configuration, the canonical one-shot invocation, the `< /dev/null` stdin rule,
   the never-pipe-codex-through-`tail` rule, the hard timeout and read-only sandbox
