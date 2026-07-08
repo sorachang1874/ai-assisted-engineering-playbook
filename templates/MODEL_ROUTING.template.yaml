@@ -1,19 +1,69 @@
 # Model routing table — a checked-in artifact, not a chat decision (principle 35).
+# Model composition within one task, and tier leases, are principle 37; see
+# docs/16-loops-and-model-composition.md § Cost-Tiered Composition.
 #
 # A fleet with a hard single-model dependency fails AS a fleet: when a fan-out hits model-quota
 # exhaustion with no fallback declared, the batch zeroes instead of degrading. So every routed
 # lane pre-declares a designated alternate here, and quota exhaustion triggers per-agent fallback
 # instead of a dead stop.
 #
+# Two clocks bound tier access (principle 37): the QUOTA clock stays per-lane
+# (on_quota_exhaustion, below); the CALENDAR clock is the models: section's per-model lease —
+# a promotional/trial/contract tier expires on a date, so it declares expires / renewal_owner /
+# on_calendar_expiry. Lanes reference models by name; a lane's composition: field (solo | advisor |
+# orchestrator) says how it splits model tiers WITHIN one task — solo carries a justifying comment
+# because top-tier solo is the composition that carries the burden of proof, not the default.
+#
 # The dispatch preflight in docs/07-multi-agent-parallel-work.md asserts, before fan-out:
 #   (1) this table exists;
 #   (2) every lane names a fallback;
-#   (3) no review lane's fallback resolves to the author's model family.
+#   (3) no review lane's fallback resolves to the author's model family;
+#   (4) every model has a lease block, and no lane's primary is past its declared `expires`
+#       (`expires: none` is legal for owned/self-hosted tiers and passes);
+#   (5) every lane declares a composition.
 # Every fired fallback is recorded in the handoff artifact
 # (docs/07-multi-agent-parallel-work.md § Handoff Artifact: "model used / fallback fired?"),
 # so a silent model downgrade cannot become a hidden fallback (principles 2, 11).
 
 schema_version: model_routing.v0
+
+# One entry per model; lanes reference these keys by name. The lease block is the CALENDAR clock
+# (principle 37) and carries exactly three fields:
+#   expires             — a date (YYYY-MM-DD), or `none` for an owned/self-hosted tier
+#   renewal_owner       — who decides pay-to-renew when the window closes (`n/a` if expires: none)
+#   on_calendar_expiry  — what happens at expiry: `degrade-to <model>`, `renew`, or `defer`
+# Quota behavior does NOT live here — it stays per-lane in on_quota_exhaustion.
+models:
+  deepest-reasoner:                        # a promotional / trial / contract-bound frontier tier
+    lease:
+      expires: 2026-09-30
+      renewal_owner: "<owner>"
+      on_calendar_expiry: degrade-to next-best-reasoner
+  next-best-reasoner:
+    lease:
+      expires: none
+      renewal_owner: n/a
+      on_calendar_expiry: n/a
+  reviewer-family:                         # a DIFFERENT family than the author (principle 14)
+    lease:
+      expires: none
+      renewal_owner: n/a
+      on_calendar_expiry: n/a
+  reviewer-family-alt:                     # another non-author family
+    lease:
+      expires: none
+      renewal_owner: n/a
+      on_calendar_expiry: n/a
+  workhorse:
+    lease:
+      expires: none
+      renewal_owner: n/a
+      on_calendar_expiry: n/a
+  workhorse-b:
+    lease:
+      expires: none
+      renewal_owner: n/a
+      on_calendar_expiry: n/a
 
 # Task-nature assignments are project policy, not principle: reasoning-dense work (planning,
 # research, review, audit) to the deepest reasoner; execution-dense work (code, tests, mechanical
@@ -25,16 +75,18 @@ revisit_when: "model lineup changes, or any lane's fallback fires more than <N> 
 lanes:
   - lane: planning
     nature: reasoning-dense
-    primary: "<deepest-reasoner-model>"
-    fallback: "<next-best reasoner>"
-    on_quota_exhaustion: degrade          # degrade | defer
+    primary: deepest-reasoner             # references a key in models: by name
+    fallback: next-best-reasoner
+    composition: orchestrator             # solo | advisor | orchestrator (principle 37) — plans/splits/synthesizes over bulk I/O
+    on_quota_exhaustion: degrade          # degrade | defer  (the QUOTA clock; the CALENDAR clock is the model's lease)
     constraints:
       - none
 
   - lane: review                          # cross-model gate (principle 14) — independence lane
     nature: reasoning-dense
-    primary: "<reviewer-family model, a DIFFERENT family than the author>"
-    fallback: "<another non-author family>"
+    primary: reviewer-family              # a DIFFERENT family than the author
+    fallback: reviewer-family-alt         # another non-author family
+    composition: solo                     # solo justified: the gate's independent end-to-end judgment IS the product; delegating it to a cheaper tier defeats the gate (principle 37)
     on_quota_exhaustion: defer            # defer the gate visibly; never substitute the author family
     constraints:
       - "review lane: fallback MUST NOT resolve to the author's model family"
@@ -42,8 +94,9 @@ lanes:
 
   - lane: implementation
     nature: execution-dense
-    primary: "<high-throughput-workhorse>"
-    fallback: "<second workhorse>"
+    primary: workhorse
+    fallback: workhorse-b
+    composition: advisor                  # cheap executor runs the task, consults deepest-reasoner only at declared junctures (principle 37)
     on_quota_exhaustion: degrade
     constraints:
       - none

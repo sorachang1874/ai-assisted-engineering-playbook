@@ -38,3 +38,19 @@ Primary and official references used to calibrate this playbook.
 - GitHub Actions workflow syntax and schedules: https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax
 - Martin Fowler on Continuous Integration: https://martinfowler.com/articles/continuousIntegration.html
 
+## Agent Loops, Model Composition, and Harness Self-Improvement
+
+- Claude Code team loop-design guide (2026) — the four loop types (interactive, goal-driven,
+  scheduled, event-driven): https://code.claude.com/docs/en/agents,
+  https://code.claude.com/docs/en/goal, https://code.claude.com/docs/en/routines,
+  https://code.claude.com/docs/en/workflows
+- Anthropic advisor/orchestrator (managed-agents) cost-composition guidance, and the
+  claude-cookbooks notebook `managed_agents/CMA_plan_big_execute_small.ipynb` (2026):
+  https://github.com/anthropics/claude-cookbooks/blob/main/managed_agents/CMA_plan_big_execute_small.ipynb
+- Lilian Weng, "Harness Engineering for Self-Improvement" (2026-07-04):
+  https://lilianweng.github.io/posts/2026-07-04-harness/
+- Trehan & Chopra, failure modes of autonomous research/engineering agents (2026; via Weng
+  2026-07-04): https://arxiv.org/abs/2601.03315
+- Bubeck et al., on overclaiming from noisy or failed results ("p-hacking eureka") (2025):
+  https://arxiv.org/abs/2511.16072
+

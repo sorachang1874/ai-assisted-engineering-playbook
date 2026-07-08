@@ -49,6 +49,18 @@ asserts the model routing is declared in the checked-in routing table
 - No review lane's fallback resolves to the author's model family — the independence lane of
   principle 14 is a constraint, not a preference: defer the gate visibly rather than substitute
   the author's family and call the result independent review.
+- Every model in the table carries a lease block and no lane's primary is past its declared
+  `expires` (principle 37; `16-loops-and-model-composition.md`) — a missing lease block or an
+  expired primary fails; `expires: none` (owned/self-hosted tiers) is legal and passes.
+- A brief that launches a loop — goal-driven, scheduled, or event-driven (principle 36;
+  `16-loops-and-model-composition.md`) — has all three `## Stop Conditions` lines filled: the stop
+  criterion, the attempt/budget cap, and the trigger. A loop brief that leaves any of the three
+  empty fails.
+- A fan-out above the threshold — more than 5 agents, or a projected spend above $50 (both
+  thresholds repo-configurable) — ran a pilot slice before the full-width launch
+  (`16-loops-and-model-composition.md` § Loop Hygiene; principle 32's retro-validation applied to
+  fan-outs). A full-width launch that skipped the pilot fails; the handoff's pilot-findings field
+  records what the pilot changed in the full run's configuration.
 
 ## Independent Review Gate
 
@@ -166,6 +178,15 @@ Each worker handoff should include:
 - Follow-up needed
 - Model used / fallback fired? (a silent model downgrade is a hidden fallback — principle 2 —
   so a fired fallback stays operator-visible here; principle 35)
+- Consults (one line per advisor consult — juncture · question · ruling · cost; zero consults on a
+  brief that declared junctures is a Deviations check, and zero on a fork-free task is the advisor
+  economics working; principle 37, `16-loops-and-model-composition.md`)
+- Negative evidence (required — attempts abandoned during this dispatch land as rows in
+  `templates/NEGATIVE_EVIDENCE.template.md`; write the literal word `none` when there were none, a
+  blank fails the dispatch preflight; principle 39)
+- Pilot findings (required for an above-threshold fan-out — what the pilot slice changed in the
+  full run's configuration: per-agent budgets, fallback rules, stall points;
+  `16-loops-and-model-composition.md` § Loop Hygiene)
 
 The lead agent should not rely on chat memory. It should be able to verify from files and commands.
 
