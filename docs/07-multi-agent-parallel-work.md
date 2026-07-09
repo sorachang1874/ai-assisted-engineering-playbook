@@ -61,6 +61,10 @@ asserts the model routing is declared in the checked-in routing table
   (`16-loops-and-model-composition.md` § Loop Hygiene; principle 32's retro-validation applied to
   fan-outs). A full-width launch that skipped the pilot fails; the handoff's pilot-findings field
   records what the pilot changed in the full run's configuration.
+- A relaunch after an interrupted fan-out names the run id it resumes from and re-dispatches only
+  lanes with no completed checkpoint (`16-loops-and-model-composition.md` § Loop Hygiene) — a
+  relaunch that would re-run a completed lane fails, and the handoff's resumed-from field records
+  the lanes re-dispatched.
 
 ## Independent Review Gate
 
@@ -187,6 +191,9 @@ Each worker handoff should include:
 - Pilot findings (required for an above-threshold fan-out — what the pilot slice changed in the
   full run's configuration: per-agent budgets, fallback rules, stall points;
   `16-loops-and-model-composition.md` § Loop Hygiene)
+- Resumed from run id / lanes re-dispatched (only on a relaunch after an interrupted fan-out —
+  name the run id the relaunch resumed from and the lanes it re-dispatched, so a rerun of an
+  already-completed lane is visible at review; `16-loops-and-model-composition.md` § Loop Hygiene)
 
 The lead agent should not rely on chat memory. It should be able to verify from files and commands.
 
@@ -233,3 +240,15 @@ Before parallel work:
   (safe to change vs defer), have an independent pass try to *refute* each
   "safe" label before the lead edits. A scout map that is merely "probably
   right" mis-edits the one site that looked safe but was not (principle 17).
+  The dispatch table the workers edit from must then be *generated* by
+  script from the verified recon artifacts, never re-typed: on one
+  domain-retirement batch a hand-typed rename map dropped one method from
+  the verified listing, re-introducing an error after the adversarial
+  pass — workers read the table, not the recon, so verify at the surface
+  the consumer reads (principle 21). Every worker brief carries the
+  closed-world clause — a site not in the table is reported as ambiguous
+  in the handoff, never guessed — which is what caught that orphan: one
+  worker reported the unlisted site instead of improvising on it (the
+  pasteable line lives in `templates/AGENT_TASK_BRIEF.template.md`
+  § Constraints). Closeout then reconciles every reported-ambiguous site
+  against the recon.

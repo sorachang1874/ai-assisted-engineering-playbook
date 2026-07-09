@@ -273,11 +273,15 @@ Practical consequences:
 ## 16. Attribute a Failure Before You Own It
 
 A test that fails after your change is not yet evidence that your change broke it.
-Before you debug, fix, or roll back, run the **control experiment**: put the code
-back to the pinned pre-change baseline (`git stash` your diff, or check out the
-base commit) and run the same failing test. If it fails identically there, the
-failure is pre-existing and your change is innocent. Attributing it to yourself
-wastes effort and can trigger a wrong "fix" that masks the real regression.
+Before you debug, fix, or roll back, run the **control experiment**: check out the
+pinned pre-change baseline as a **parallel `git worktree`** and point the same
+failing test at that checkout with an import-path override (`PYTHONPATH` or your
+stack's equivalent), so the control run never touches the tree you are editing.
+(`git stash` of your diff works only when you are provably the sole occupant of
+the tree — treat it as a flagged solo-only fallback.) If the test fails
+identically on the baseline, the failure is pre-existing and your change is
+innocent. Attributing it to yourself wastes effort and can trigger a wrong "fix"
+that masks the real regression.
 
 The control run is cheap — re-run only the failing tests, not the suite — and
 decisive, and it is the discipline that keeps a refactor honest. A sub-agent
@@ -286,15 +290,26 @@ run pinned to the base commit routinely refutes most or all of them.
 
 Practical consequences:
 
+- **Run the control beside the tree, never by flipping it.** A `git stash` or
+  in-place checkout of the base commit swaps the entire working tree under every
+  concurrent agent sharing it (principle 22; the fan-out topology in
+  `07-multi-agent-parallel-work.md`). One domain-retirement batch stashed for
+  a baseline run and blocked its edit, reconciliation, and doc lanes for twenty
+  minutes, invalidating their suites mid-run; a parallel-worktree checkout with the
+  test's import path pointed at it costs the same and mutates nothing shared.
 - Maintain a **known-failure budget**: a recorded list of failures already proven
   pre-existing by control attribution. A new entry requires the control run first
   — a failure is not "known" until it is attributed. The budget lets a
   green-modulo-budget run count as a pass without re-litigating each failure every
   batch, and the same set re-appearing unchanged after your edit is itself the
-  proof you added nothing new.
-- The same technique proves the *opposite* when you do change behavior: stash the
-  fix and show the regression test fails on the baseline, then passes with the fix.
-  That round-trip is what makes a regression test trustworthy rather than vacuous.
+  proof you added nothing new. Pin the budget as a checked-in fingerprint
+  artifact that CI diffs, ratcheted only-down — a decrease re-pins the
+  baseline in the same change, an increase fails the lane
+  (`templates/RESIDUAL_LEDGER.template.md` § Inherited-Debt Baselines).
+- The same technique proves the *opposite* when you do change behavior: run the
+  regression test against the baseline worktree and show it fails there, then
+  passes with the fix in your tree. That round-trip is what makes a regression
+  test trustworthy rather than vacuous.
 - Distinguish "my change *caused* this" from "my change *surfaced* this" — e.g. a
   test that only now runs because a guard began requiring a real dependency, or a
   test-isolation artifact that a schema change exposed. Both are
@@ -321,11 +336,16 @@ sites — do not trust the name or the count:
 - **Adversarially verify the classification; default to DEFER.** Have an
   independent pass try to *refute* that each site is safe to change; only sites
   that survive get edited. A scout map that is merely "probably right" will
-  mis-edit the one write that looked like a read.
+  mis-edit the one write that looked like a read. Hand workers a *generated*
+  table, not a re-typed one — transcription after verification is unverified.
 - **Preserve the exact observable behavior of the surviving path**, including its
   no-row / error sentinel (`None` vs `{}` vs `[]` vs `0` vs raise). Deleting dead
   code must be behavior-identical under the live contract — verify per batch, not
   once per sweep.
+- **A "verbatim move" claim must be provable mechanically**, not by eyeballing
+  the diff: AST-extract each moved function, normalize through the declared
+  substitution table, byte-diff, and accept only the pre-declared residual set
+  (`03-testing-strategy.md` § Byte-Equivalence Gates for Verbatim Moves).
 - Batch by cohesive group, verify each batch against its real consumers, and keep
   the entangled minority for a later structural pass rather than forcing it into
   the mechanical one.
@@ -774,6 +794,20 @@ review, and each able to weaken or obscure the gate.
 - **Enumerate the gate's own files inside its own protected set**, and prove it with a synthetic
   test: a change touching only the detector must trip the gate. A gate that does not guard itself
   gets silently disarmed by maintenance long before any attacker tries.
+- **A guard that scans source has a scanning surface, and an empty surface passes.** Tampering
+  is not the only way a scanner dies: the code it protects can move out from under its scan
+  roots, and the guard then goes green by scanning nothing. One team's source-scanning schema
+  guard — it re-derives every write-conflict target from literal SQL and asserts a matching
+  unique index — silently ran in no lane for ten days after a refactor; a later domain-retirement
+  batch that relocated storage methods into a new package had to re-aim every text-scanning guard
+  pointed at the old file in the same batch, or each would have passed by scanning nothing. Three
+  teeth close the hole: a known-positive sentinel (one target the scan must always find — finding
+  zero sentinels means the guard is broken, not the tree clean, principle 20's fail-closed
+  default applied to the scanner's own denominator), a denominator floor (fail when the count of
+  targets scanned drops below a pinned floor; one such guard pins fifty), and the rule that scan
+  roots migrate in the same batch as any move of the protected code — verified by the sentinel
+  re-firing at the new location. (This pitfall is a row in the Pitfall Log of
+  `13-operator-decisions-and-evidence-integrity.md`.)
 - **Declare one side the source of truth between detector code and policy prose**, and check the
   other against it — otherwise the two drift and the prose becomes a lie about what is enforced.
   This is principle 21's derived-copy problem, playing out between code and documentation.
@@ -912,6 +946,12 @@ and quota exhaustion triggers automatic per-agent fallback instead of a dead sto
   review lane must never resolve to the author's model family — defer the gate visibly (and let the
   residual ledger of principle 30 record the skip) rather than silently substitute the author's
   family and call the result independent review.
+- **Fallback keeps agents alive; it does not keep finished work.** If the relaunch after an
+  interruption is a full rerun, a fleet with a perfect routing table still pays twice for every
+  completed agent's reviewed output — and re-rolls results a reviewer may already have read. Pair
+  the table with run-id checkpoint-resume (`16-loops-and-model-composition.md` § Loop Hygiene
+  owns the mechanics): the two defend different halves of the batch — fallback carries agents
+  *through* the wall, resume carries finished work *through* the interruption.
 - **The specific task-nature assignments are project policy, not principle.** Routing
   reasoning-dense work (planning, research, review, audit) to the deepest reasoner and
   execution-dense work (writing code and tests, mechanical migration) to the high-throughput
@@ -958,3 +998,39 @@ Principle 30 owns deliberate noes — rulings, with tripwires; principle 16 owns
 - **Make saving the failed attempt the path of least resistance.** The pipeline cannot depend on the model's candor about its own failures: the handoff carries a required negative-evidence field — `none` is written explicitly, a blank fails the dispatch preflight.
 - **The log is load-bearing, not archival.** Principle 38's harness loop diffs each new proposal against it before spending a run; and a failure that hardens into a decision never to retry graduates into principle 30's ledger with a tripwire — this principle owns the raw evidence beneath those rulings.
 - **Executable form:** `templates/NEGATIVE_EVIDENCE.template.md`, instantiated beside the project's residual ledger — one dated row per abandoned attempt: what was tried · model/version/date · direct cause · causal state · abstract mechanism · why abandoned; the handoff template's negative-evidence field is required (`none` allowed, blank not); `08-review-and-delivery-checklists.md`'s harness-change review diffs proposals against this file.
+
+## 40. A Lane That Can Skip Its Subject Is Not Evidence — External-Runtime Skips Fail Closed
+
+Principle 20 keeps a component from running unprotected when its separate enforcement is absent;
+this is the same rule pointed at CI: a gating test lane must hard-depend on the external runtime
+its subject needs — a real database, a container daemon, a broker — or the lane goes green the
+day that runtime is missing, by asserting nothing. A skip is the test framework's built-in
+fallback from "asserted" to "not attempted" (principle 2), and like every graceful fallback it
+must stay operator-visible (principle 11), not vanish into a green summary line. One team's
+curated database-backed contract lane depended on a local container runtime; the day the
+container daemon was down, the lane mass-skipped its database-backed majority and reported green
+— the acceptance run built on that verdict was invalidated only because a human happened to read
+the skip count. A green suite that never ran its subject is principle 28's dishonest gate made
+literal: no machine could have failed because of the property the lane claimed to check.
+
+- **In a gating lane, an absent dependency is a failure, not a skip.** Fixtures honor a
+  `REQUIRE_<DEP>=1` environment flag that converts their skip guard into a hard fail, and the
+  lane's command sets the flag unconditionally for every segment — a dead dependency turns the
+  lane red instead of hollow. One guard with two postures — gating hard-fail, developer-local
+  polite skip — not two guards that drift apart.
+- **Pin the lane's denominator.** A curated gating lane asserts zero skips — or a pinned
+  collected-test count — as its own final check. "N passed" is evidence only relative to the N
+  the lane was supposed to run, and a mass-skip is invisible precisely because every test that
+  still runs passes.
+- **Prove the fail-closed path by mutation, once.** Break the dependency deliberately — point
+  the lane at an unreachable database — and watch both postures: without the flag the subject
+  silently skips; with it, the same run fails. One team ran exactly this control and watched one
+  skip convert to one failure, turning "the flag works" from belief into observed behavior.
+- **"Skipped" is a reportable outcome, not noise.** Non-gating lanes may keep conditional skips,
+  but the count is surfaced in the summary the operator reads — this failure class survives on
+  skips being the one number nobody looks at.
+- **Executable form:** `03-testing-strategy.md` § Environment-Dependent Lanes Fail Closed (the
+  REQUIRE-flag, zero-skip, and mutation-self-check mechanics); the Signoff Review line in
+  `08-review-and-delivery-checklists.md` (skip counts in gating lanes are zero or
+  REQUIRE-gated); the Pitfall Log row in `13-operator-decisions-and-evidence-integrity.md`
+  (gating lane mass-skips its absent subject).

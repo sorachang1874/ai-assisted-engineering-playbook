@@ -54,6 +54,8 @@ home). Answer each per task, or write why it does not apply:
 ## Constraints
 
 - 
+- Closed world: edit only sites listed in `<table artifact>`; a site not in the table is
+  reported as ambiguous in the handoff, never edited by inference.
 
 ## Validation
 

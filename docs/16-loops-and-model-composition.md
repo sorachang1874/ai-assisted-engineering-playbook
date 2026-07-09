@@ -92,6 +92,17 @@ apply 29 and `08-review-and-delivery-checklists.md` § Cross-Model Gate Review u
   default — a fan-out of more than 5 agents, or a projected spend above $50 (both thresholds
   repo-configurable), asserts that a pilot slice ran — and the dispatch log entry carries a
   required pilot-findings field: what the pilot changed in the full run's configuration.
+- **A partially failed fan-out resumes; it never reruns survivors.** Give every fan-out a run id
+  at dispatch and land each agent's output in files keyed by it — the concrete payoff of the
+  lands-in-files rule that closes this section; the relaunch then takes resume-from-run-id and
+  re-dispatches only the lanes with no completed checkpoint. One large verification fan-out was
+  killed mid-run by a primary-model quota wall with roughly half its agents complete; because
+  every finished agent's output was checkpointed under the run id, the relaunch resumed from that
+  id and re-dispatched only the unfinished lanes — the completed half was never re-run or
+  re-rolled. Fallback (principle 35) and resume defend different halves of the batch: fallback
+  keeps agents alive *through* the wall, resume keeps finished work *through* the interruption.
+  Re-running a completed agent pays twice for reviewed work — and re-rolls outputs a reviewer may
+  already have read.
 - **Deterministic work runs as scripts, not reasoning.** Running a script is cheaper, faster, and
   more reliable than having a model re-derive the same steps every iteration (loop guide); reserve
   inference for genuine judgment points. At each pipeline stage ask: is this
@@ -323,6 +334,9 @@ the cure for an unknown known is a form with a blank that will not stay blank.
 - [ ] Fan-outs above the preflight threshold (more than 5 agents or over $50 projected,
       repo-configurable) ran a pilot slice first; the dispatch log's required pilot-findings field
       says what the full run's configuration changed.
+- [ ] Every fan-out carries a run id and lands each completed agent's output in files keyed by
+      it; a relaunch after interruption resumes from the run id and re-dispatches only lanes with
+      no completed checkpoint — survivors are never re-run or re-rolled.
 - [ ] Rule-decidable pipeline stages are scripts; the LLM upgrade for each is tripwired behind
       recorded evidence that the rules fail.
 - [ ] A below-bar iteration produced a system fix (guard, preflight, skill) inherited by all future

@@ -122,9 +122,10 @@ contract-freeze-before-fan-out rule (doc `02`, doc `07`) is what makes the paral
 For a vocabulary/shape refactor that must keep a legacy artifact byte-identical while new work moves to
 the new model, freeze the contract **slice by slice** rather than in one big bang: per slice, the lead
 freezes the contract, the owner implements, and a **double-run equivalence test** proves the legacy path
-is unchanged while the new path produces the intended result. Mark the compatibility layer *transitional*
-with an explicit deletion gate (e.g. "remove the legacy union once the last lesson using it retires") —
-not a permanent fixture (principle 17).
+is unchanged while the new path produces the intended result (determinism checklist:
+`03-testing-strategy.md` § Determinism Checklist for Double-Run Equivalence). Mark the compatibility
+layer *transitional* with an explicit deletion gate (e.g. "remove the legacy union once the last
+lesson using it retires") — not a permanent fixture (principle 17).
 
 ## Integration discipline (separate-process specifics)
 
@@ -167,6 +168,7 @@ that the separate-process reality does not actually deliver.
 - [ ] Per-agent status files; append-only log with global monotonic numbering; per-task `verify:`
       and `expected-done:`; a patch-shaped request template; periodic archival.
 - [ ] Contracts frozen before fan-out (slice by slice for refactors, with a double-run equivalence test
-      and a deletion gate for any transitional compatibility layer).
+      and a deletion gate for any transitional compatibility layer; determinism checklist:
+      `03-testing-strategy.md`).
 - [ ] After a peer merges, rebase on main; verify any squash captured the intended content by grepping
       the merged result, not by assumption.

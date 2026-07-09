@@ -245,9 +245,10 @@ Before merging:
 - Verify tools or dependencies discovered missing during implementation are
   tracked as follow-up work, not left only in chat history.
 - Before attributing any post-change test failure to the change, run the control
-  experiment: re-run the failing test on the pinned pre-change baseline. Identical
-  failure means pre-existing — record it in the known-failure budget and do not
-  "fix" it under this change (principle 16).
+  experiment: re-run the failing test on the pinned pre-change baseline (in a
+  parallel worktree, not by flipping the shared working tree). Identical failure
+  means pre-existing — record it in the known-failure budget and do not "fix" it
+  under this change (principle 16).
 - Verify the change imports and runs from a clean checkout, not only from the
   working tree: tracked code must not import an untracked local module, and any
   oracle or test must route to where the code actually runs (principle 14).
@@ -290,3 +291,6 @@ Before declaring a phase complete:
 - Any remaining test failures are accounted for by the known-failure budget, each
   entry control-attributed to a pre-existing cause (principle 16), not silently
   tolerated.
+- Skip counts in gating lanes are zero or REQUIRE-gated: environment-dependent
+  fixtures ran fail-closed, with a zero-skip or pinned collected-count assertion —
+  a lane that can mass-skip its subject is not evidence (principle 40).

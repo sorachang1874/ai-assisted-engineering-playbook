@@ -5,7 +5,9 @@ automation declined, an architecture rejected — is a row here, not a memory (p
 Memoryless reviewers and fresh sessions re-surface a true-but-accepted finding at full cost;
 a ledger row lets the next review, audit, or gate round **diff against the decision instead of
 relitigating it**. Principle 29's terminator feeds this file to the reviewer and requires every
-finding classed as a residual to cite a row `id`.
+finding classed as a residual to cite a row `id`. Debt inherited rather than decided —
+pre-existing type errors, known failures, skip inventories — is pinned here too
+(§ Inherited-Debt Baselines).
 
 ## Ledger
 
@@ -46,14 +48,36 @@ Grow automation the same way, by pre-committed tripwires recorded here: decide i
 evidence justifies the next tier ("LLM triage only after three real misroutes"; "a hard CI gate
 only after the advisory digest is ignored twice").
 
+## Inherited-Debt Baselines
+
+Debt you inherit rather than accept — pre-existing type-checker errors, known test failures, an
+old skip inventory — gets the same treatment as a residual: pinned, owned, and diffed instead of
+remembered. One refactor team inherited 87 type-checker errors; rather than fix them all up front
+or blanket-ignore them, they pinned the per-module count as a checked-in baseline and accepted
+every batch against that pin. This is principle 16's known-failure budget made machine-checkable:
+"the same set re-appearing unchanged" becomes a diff, not a recollection (a norm left as prose
+is not implemented; principle 28).
+
+- **One pinned fingerprint file per debt class**, checked in beside this ledger: the sorted
+  known-failure list, the type/lint error count per module, the skip inventory. Sorted and
+  deterministic, so the comparison is byte-stable.
+- **Acceptance = identical against the pin**: byte-identical for list fingerprints,
+  count-identical for per-module totals. Any other result is a finding, not noise.
+- **The ratchet is only-down**: a decrease re-pins the baseline in the same change, so the win
+  is banked and cannot silently regress; an increase fails the lane, with no override cell.
+- **Every baseline is also a ledger row** — owner, date, and a tripwire that is the ratchet
+  target or deadline ("module X at zero errors by <date>"; "budget under N before the next
+  extraction batch").
+
 ## Preflight
 
 A residual without a tripwire is prose (principle 28) — unbounded acceptance is forgetting with a
-paper trail. Keep this file lintable and run the check with the other fast preflights
+paper trail. Keep this file — and its companion fingerprint pins — lintable and run the check with the other fast preflights
 (principle 3):
 
 ```sh
-# fail if any ledger row is missing its tripwire, or a `never` row its ratified-by/date
+# fail if any ledger row is missing its tripwire, a `never` row its ratified-by/date,
+# or an inherited-debt baseline moved above its pin
 make lint-residual-ledger
 ```
 
@@ -62,3 +86,5 @@ Checks:
 - Every row has a non-empty `tripwire` cell — **an entry missing it exits nonzero.**
 - Every `status: never` row has non-empty `ratified-by` and `date`.
 - Row ids are unique (gate rounds cite them by id; principle 29).
+- Every inherited-debt baseline matches its pin or has moved only down — **an increase exits
+  nonzero** (a decrease re-pins in the same change).
