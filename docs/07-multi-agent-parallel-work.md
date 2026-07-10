@@ -124,22 +124,32 @@ family** than the author (e.g. Codex/GPT reviewing Claude's output, or vice
 versa). Different models have different blind spots; in practice cross-model
 review has caught blockers the author's own model family repeatedly missed.
 
-Proven configuration (validated 2026-06; revisit when models change):
+Standing model policy (2026-07-10, supersedes the 2026-06 pinned combo):
 
-- **Model `gpt-5.5`, reasoning effort `xhigh`, service tier `fast`.** Review
-  DEPTH is governed by the reasoning effort; the service tier only changes
-  serving latency — so fast mode keeps review quality while cutting wall-clock.
-  Quota note: when another agent (e.g. Claude Code) is the primary dev driver,
-  Codex spend is nearly all reviews, which makes the fast tier affordable.
-- Gotcha: on ChatGPT-account Codex, `-m gpt-5.5-fast` is **not a valid model**
-  (400). The correct knob is the `service_tier` config key. Validate config
-  keys cheaply with `--strict-config` before relying on them.
+- **The review gate always runs the NEWEST available model at the HIGHEST
+  reasoning effort — never pin a model/effort/tier inside gate scripts or
+  docs.** The single place that tracks "latest + max" is the operator-maintained
+  codex global config (`~/.codex/config.toml`); gate scripts inherit it and
+  RECORD the effective model/effort into each review report (auditability:
+  every verdict is attributable to a model+effort). Pinning inside scripts is
+  how a gate silently decays — we caught a gate running a new model at a stale
+  pinned effort, i.e. paying for less review depth than the operator intended.
+  (Reference point when this policy was written: `gpt-5.6-sol` + effort
+  `ultra` + tier `fast`. The 2026-06 validated combo `gpt-5.5`+`xhigh`+`fast`
+  is history — do not copy pins forward.)
+- Review DEPTH is governed by the reasoning effort; the service tier only
+  changes serving latency — fast tier keeps review quality while cutting
+  wall-clock. Quota note: when another agent (e.g. Claude Code) is the primary
+  dev driver, Codex spend is nearly all reviews, which makes fast affordable.
+- Gotcha: on ChatGPT-account Codex, a model-name suffix like `-fast` is **not
+  a valid model** (400). The correct knob is the `service_tier` config key.
+  Validate config keys cheaply with `--strict-config` before relying on them.
 
-Canonical one-shot invocation:
+Canonical one-shot invocation (NO pinned `-c` model/effort flags — inherits
+the global config; explicit env-var overrides are for A/B experiments only):
 
 ```bash
 codex exec --sandbox read-only \
-  -c model_reasoning_effort="xhigh" -c service_tier="fast" \
   "<standing REVIEW_BRIEF + changed files + change-specific questions>" \
   < /dev/null > review.out 2>&1
 ```
