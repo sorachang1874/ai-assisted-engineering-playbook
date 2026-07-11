@@ -1007,3 +1007,40 @@ nonexistent attack vectors, and future readers who learn wrong semantics from yo
 - Being stricter than the external system is fine (fail-closed, principle 20); *describing* the
   external system wrongly is not. The test: could someone learn the external system's real
   behavior from your checker's messages and comments alone? If not, the layers are merged.
+
+## 42. An Expensive Read Happens Once — Derive a Caption the Next Agent Reads Instead of the Source
+
+Some inputs are expensive or irreversible to read: a scanned multi-page PDF read page-by-page
+through vision, a long transcript, a large paid-API response, a forum thread exported to images.
+Re-reading them every session is pure waste — but the naive fix ("read once, save the text")
+silently drops what lived *only* in the source: the terminal output inside a screenshot, the
+numbers on a chart, the caveat in a diagram. The derived note then *looks* complete and the next
+agent trusts it as the whole, never knowing what was lost. The discipline is to derive a
+**caption** — a standalone summary the next agent reads *instead of* the source — and to make its
+completeness checkable rather than assumed.
+
+- **The caption must self-attest its read depth.** Record how much of the source was read (all N
+  pages, or "exported PDF stopped at page 11/24 — replies not captured"), the source's scale, and
+  a fetch date. A caption that hides how partial it is manufactures false confidence; one that
+  says "pages 12–24 unread, go to the source for the reply-section caveats" routes the next agent
+  correctly.
+- **Transcribe the visual layer, not just the text layer.** A source's screenshots, charts, and
+  terminal captures carry facts the text extractor never sees; the caption needs an explicit
+  *source-only* section that pulls them in. Skipping it turns "read once" into "read half" — and
+  the omission is invisible downstream. (This is the single most common way a caption betrays the
+  reader.)
+- **A caption expires.** The source can change; the caption records its capture date and, where
+  the source is a living page, the condition under which it must be re-read (principle 39's expiry
+  applied to derived reads).
+- **A caption can be more visible than its source.** For a sensitive source, the caption
+  *describes which fields exist* and transcribes no secret values — so the source stays access-
+  restricted while the caption is freely shared/committed. Field-presence, never values (doc 12).
+- **A master index precedes the sources.** One index the agent reads first — "read the caption
+  before reopening the source" — turns a directory of opaque blobs into a navigable, cheap-to-
+  scan map; each entry carries a one-line hook and the caption's relevance to the current work.
+- **Executable form:** every expensive source gets a sibling `<source>.caption.md` from
+  `templates/CAPTION.template.md` — frontmatter with `read_status` (fully-read / partial + what's
+  missing), source scale, `sensitivity`, and a **required** *source-only / image-only* section; a
+  master `INDEX.md` states the read-caption-before-source rule and links every caption. The pass
+  that builds captions fans out one reader per source (doc 07) and reuses any prior extraction
+  before re-rendering (don't pay the expensive read twice).
