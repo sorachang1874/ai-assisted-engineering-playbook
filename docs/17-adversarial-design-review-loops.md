@@ -1,19 +1,26 @@
 # Adversarial Design Review Loops and Invariant Checklists
 
-Distilled 2026-07-13 from a six-round cross-model design-review loop run on the sourcing-agent
-repo (Track D agent-runtime design: Claude Fable 5 authored, GPT-5.6 reviewed through the
-canonical read-only runner; three valid hash-bound artifacts + three extracted-reference
+Distilled 2026-07-13 from an eight-round cross-model design-review loop run to termination on the
+sourcing-agent repo (Track D agent-runtime design: Claude Fable 5 authored, GPT-5.6 reviewed
+through the canonical read-only runner; valid hash-bound artifacts + extracted-reference
 transcripts). This doc owns the *design-input* review loop; `08-review-and-delivery-checklists.md`
 keeps gate operations, `13-operator-decisions-and-evidence-integrity.md` keeps evidence integrity.
 
-## 1. The non-convergence dynamic (measured)
+## 1. The non-convergence dynamic (measured to termination)
 
-Findings per round: 24 → 16 → 17 → 6 → 5 → 11. Every round fixed layer N and the reviewer found
-layer N+1 — because each fix *introduces new mechanisms* (a CAS, a grant record, a result slot)
-that themselves lack fences, lifecycles, tenant keys. This is not reviewer noise: every round
-caught at least one genuine defect, including author regressions (a tenant key silently dropped
-during a rewrite) and real production-grade holes (simulated evidence able to become authoritative
-state). The terminal state of an unmanaged loop is "the document equals the implementation."
+Findings per round, full run: **24 → 16 → 17 → 6 → 5 → 11 → 9 → 7**. Every round fixed layer N and
+the reviewer found layer N+1 — because each fix *introduces new mechanisms* (a CAS, a grant
+record, a result slot) that themselves lack fences, lifecycles, tenant keys. The conclusive
+data point came in round eight: its top blockers were the state machine and lost-wakeup race of
+`awaiting_budget` — the mechanism round seven's remediation had introduced. The self-reference
+also never closes on the process side: fixes come *from* the matrix, and every fix makes the
+matrix stale, which the next round correctly flags. **Prose has no fixpoint.** This is not
+reviewer noise: every round caught at least one genuine defect, including author regressions
+(a tenant key silently dropped during a rewrite) and real production-grade holes (simulated
+evidence able to become authoritative state; two commands physically colliding on a shared
+idempotency unique constraint). The terminal state of an unmanaged loop is "the document equals
+the implementation" — and the terminal findings are precisely the ones that real storage plus
+race tests settle in hours while prose iteration only spawns meta-findings about them.
 
 Manage it with three levers:
 
@@ -34,15 +41,25 @@ Manage it with three levers:
    become live state).
 2. **A mechanism × invariant matrix as a first-class design artifact**, cells filled by parallel
    verification agents (one per class), not by author self-assessment. In the measured run the
-   first self-sweep intercepted 74 findings pre-review — including four blockers the author had
-   introduced while fixing the previous round.
+   first self-sweep intercepted 74 findings pre-review; the regenerated 200-cell matrix caught
+   four more author-introduced consistency blockers before round eight. **Calibrate expectations:
+   the matrix's real, measured value is intercepting author self-harm before the reviewer sees
+   it (it did so in two consecutive rounds) — it does not and cannot drive the reviewer's
+   blocking set to zero, because "unsound mechanism" at ever-finer granularity is always findable
+   in prose.** Regenerate the matrix after every revision or its stale cells become legitimate
+   findings themselves; give obligations stable IDs so the reviewer can cite instead of re-raise.
 3. **Calibrated reviewer prompt + explicit termination rule.** Tell the reviewer: blockers are
    only factual errors, contract violations, unsound mechanisms, and contradictions; anything the
    implementation-batch protocol (scout / characterize-first / per-batch gate) will settle is an
    obligation — check the recorded obligation ledger before raising, cite instead of re-raise.
    Terminate when a round's blocking set is empty or consists only of recorded obligations; then
    the owner accepts the residual as an explicit exception and the findings convert into
-   implementation-batch entry obligations. Without an owner-set stopping rule the loop runs
+   implementation-batch entry obligations. **In the measured run the mechanical termination rule
+   never fired in eight rounds even when supplied as a binding instruction — the reviewer always
+   legitimately classified the newest mechanisms' gaps as new blockers. The only real terminal
+   state observed is the owner-accepted exception.** Plan for that from round one: the loop's
+   deliverable is not a GO verdict but a hardened design plus a findings-to-obligations ledger
+   the implementation batches inherit. Without an owner-set stopping decision the loop runs
    forever, because a reviewer's standard legitimately rises to meet the document.
 
 **The checklist itself must iterate.** Track the invariant-class distribution of each round's
