@@ -220,7 +220,9 @@ Before parallel work:
 - Assign file ownership.
 - Define validation commands.
 - Define no-touch areas.
-- Define merge order.
+- Define merge order — and the mechanism per boundary: cherry-pick lane commits by default,
+  rebase only on a lane's own branch, never rewrite the integration branch
+  (`20-multi-session-team-execution.md` § Merging and Version Control for Lane Work).
 - Register every shared write hotspot in the delivery graph; "coordinate while
   both edit it" is an unmodelled serialization edge, not a parallel plan.
 

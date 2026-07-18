@@ -148,6 +148,71 @@ is pushed back to its bounded scope before integration, not integrated because
 it is already written — one minimal SQL-fence lane grew to ~431 lines in
 flight and was pushed back to +265 before its commit was consumed.
 
+## Merging and Version Control for Lane Work
+
+Lane branches are disposable delivery vehicles; the integration branch is the
+only canonical line. A lane branch exists to carry one packet's commits from
+one pinned base to one handoff. Once the integration owner consumes it, the
+branch is deleted; work that lives only on a lane branch is invisible to the
+graph, the board, and every other session.
+
+The default integration mechanism is the cherry-pick of reviewed lane commits
+onto the integration branch: never copied dirty files (forbidden above), and
+never a merge of a lane branch carrying unrelated history — a merge drags the
+lane's whole ancestry into the canonical line and makes a later bad change
+unattributable to one packet. Integrate one lane at a time, in dependency and
+hotspot order, and re-run the combined oracle — the affected suite over
+everything integrated so far — after each pick, so a failure is charged to
+exactly one lane while the culprit is obvious.
+
+Choose the mechanism by boundary:
+
+| Mechanism | Use when |
+| --- | --- |
+| cherry-pick | default: delivering reviewed lane commits into the integration branch |
+| fast-forward merge | promoting a whole reviewed wave at once, when the integration branch has not diverged and linear history is preserved |
+| pull request | the merge gate needs an external review surface — a human gate reviewing through GitHub (the doc-14 topology), a reviewer without local access, a fork, or a cross-project integration batch |
+| rebase | only on a lane's own branch, before handoff, to refresh it onto a new pinned base |
+
+Never rebase the integration branch itself: it is shared history, and
+rewriting it invalidates every outstanding packet's pinned base and every
+review artifact's pinned commit at once.
+
+Before each pick, the integration owner verifies, in order:
+
+1. the packet's pinned base and dependency evidence still match the graph;
+2. lease compliance — the lane's diff touches only its leased write paths,
+   with the scope check from § Integration and Handoff;
+3. the packet's declared validation reruns green in the lane's own worktree —
+   handoff text is a claim, not evidence; and only then
+4. the pick lands and the combined oracle reruns on the integration branch.
+
+### Branch Hygiene for Coordination and Documentation Repos
+
+The same rules bind the repositories that hold plans, contracts, and docs —
+this playbook included. One mainline (`main`); topic branches are short-lived
+and merge back within days, not weeks; merged branches are deleted on both
+sides. A branch that accumulates multiple unrelated topics, or outlives the
+wave that created it, is itself an SSOT defect: the repository now holds
+several candidate truths, and which one is current depends on which branch you
+read. A documentation repo carrying a long-lived drafting branch beside
+`main`, plus a stale feature branch still on the remote, has exactly this
+shape; the fix is merge cadence, not better branch names.
+
+Concurrent documentation edits by different agents are kept conflict-free by
+routing and ownership — each lane owns different files or sections per the
+documentation router (`18-documentation-routing-and-lifecycle.md`) — not by
+long-lived parallel branches. Parallel branches are how a docs repo forks its
+own truth.
+
+### Merge Cadence
+
+Integrate early, small, and often. Integration lag is a queue, not a badge:
+every day a reviewed lane sits un-integrated, its pinned base rots toward the
+`stale_if` invalidators and its review artifact drifts from the bytes it
+certified, so revalidation cost grows. A pile of un-integrated lane branches
+is work-in-progress inventory with branch names.
+
 ## Stale Packet Retirement
 
 A packet becomes stale when its revalidation deadline passes, its base or

@@ -110,7 +110,9 @@ for top-down dependency graphs, `.coord` execution, asynchronous review,
 bulk-change partitioning, related-product convergence, and periodic distillation.
 See [Multi-Session Team Execution](docs/20-multi-session-team-execution.md) for
 turning delivery-graph lanes into pinned, isolated, lease-bounded task packets
-that a human can dispatch across several Coding Agent sessions.
+that a human can dispatch across several Coding Agent sessions, and for the
+merge, cherry-pick, and branch-hygiene discipline that keeps one canonical
+integration line.
 See [Interruption-Safe Handoff and Session Resume](docs/21-interruption-safe-handoff.md)
 for keeping lanes resumable when a session dies mid-task: WIP commits, per-lane
 resume cards, dead-lane recovery, and the session-archaeology runbook.

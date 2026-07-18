@@ -163,6 +163,14 @@ specifically when long-lived agents push to the same remote:
   ran from the branch. The true cutoff was found only by grepping `origin/main` for content markers, not
   by trusting the squash message or "where I thought it was." Rule: stop pushing to a merged branch; open
   a fresh PR for continued work; and confirm what a squash captured by grepping the merged content.
+- **Merge cadence: integrate early, small, and often.** Integration lag is a queue, not a badge —
+  every un-integrated lane is work-in-progress inventory whose pinned base rots toward staleness and
+  whose review artifact drifts from the bytes it certified. The mechanism menu (cherry-pick lane
+  commits by default, fast-forward for a whole reviewed wave, rebase only on a lane's own branch,
+  never rewrite the integration branch) and the branch-hygiene rules — one mainline, topic branches
+  merge back within days, merged branches deleted — are in
+  `20-multi-session-team-execution.md` § Merging and Version Control for Lane Work. In this topology
+  the human's PR merge remains the gate; the cadence rule applies to it unchanged.
 
 ## What to deliberately *not* build
 
