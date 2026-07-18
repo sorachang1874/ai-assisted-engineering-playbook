@@ -11,6 +11,7 @@ contracts remain authoritative.
   README.md
   BOARD.md                       # lead-owned live projection of delivery graph(s)
   status-<agent>.md              # each agent writes only its own file
+  session-packets/<packet>.md    # immutable issued packet per independent session attempt
   handoffs/<lane-id>.md          # immutable handoff per completed attempt
   distill/<stamp>-<agent>.md     # append-only improvement candidates
   log/<number>-<agent>-<kind>.md # append-only questions, decisions, corrections
@@ -30,6 +31,8 @@ links exact release-candidate commits rather than sharing mutable runtime files.
 4. Promote a normative decision to Git, then announce its commit in the log.
 5. Cross-project work exchanges versioned capability/request/result/evidence
    envelopes and pinned commits, never dirty-tree paths or implicit files.
+6. An issued session packet is immutable. Replace it with a higher packet
+   version when its base, dependencies, path lease, or hotspot order changes.
 
 ## Start or Resume
 
@@ -44,7 +47,10 @@ links exact release-candidate commits rather than sharing mutable runtime files.
 4. Read `BOARD.md`, your own status, and logs newer than your last seen number.
 5. Claim only a ready lane whose owner matches you. Record repo, commit,
    branch/worktree, expected completion, exact validation, and write paths.
-6. Re-check the shared worktree before every edit. An unplanned writer in one
+6. For an independent Coding Agent session, validate its packet with
+   `python scripts/check_session_packet.py <packet> --ready`, then verify the
+   worktree `HEAD` equals the packet's full base commit.
+7. Re-check the shared worktree before every edit. An unplanned writer in one
    of your paths is a stop condition.
 
 ## While Working
@@ -77,10 +83,11 @@ On a user ping, merge event, expected-done overrun, or scheduled sweep, the lead
 2. checks statuses, handoffs, branches/PRs, and new logs;
 3. compares declared writes with actual diffs;
 4. detects stale/conflicting claims and cross-repo state leakage;
-5. integrates completed lanes in graph order;
-6. creates fixed-forward lanes for scoped findings;
-7. refreshes the board; and
-8. schedules a distill lane when its trigger fires.
+5. retires or supersedes stale packets without editing claimed packets in place;
+6. integrates completed lanes in graph and hotspot order;
+7. creates fixed-forward lanes for scoped findings;
+8. refreshes the board; and
+9. schedules a distill lane when its trigger fires.
 
 Archive completed rows and old logs after durable state is linked from the
 project snapshot. Do not let `.coord/` become a second progress database.

@@ -78,6 +78,12 @@ the plan; the board is an observation of its current execution. If they
 disagree, stop scheduling from the board, update and commit the lead-owned
 graph, then refresh the board.
 
+For independent long-lived Coding Agent sessions, turn each ready graph lane
+into a pinned, isolated, lease-bounded packet using
+[`SESSION_TASK_PACKET.template.md`](../templates/SESSION_TASK_PACKET.template.md).
+The issuance, stale-retirement, and integration protocol is in
+[`20-multi-session-team-execution.md`](20-multi-session-team-execution.md).
+
 ## Top-Down Decomposition Protocol
 
 Do this before implementation, not after scripted or end-to-end tests expose a
@@ -349,3 +355,6 @@ Otherwise improve the plan or finish the current wave.
       milestone/weekly/mechanism trigger.
 - [ ] A new session opens only for a ready node with bounded ownership and
       available integration capacity.
+- [ ] Every independent Coding Agent session has a validated packet with a
+      pinned base, unique branch/worktree, path lease, dependency evidence,
+      hotspot turn, integration owner, and stale-retirement rule.

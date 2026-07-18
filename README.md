@@ -76,6 +76,9 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - `examples/`: concrete contract, phase, review-gate, and preflight examples.
 - `scripts/check_delivery_graph.py`: standard-library validation for delivery
   dependencies, shared write hotspots, and review-to-promotion edges.
+- `scripts/check_session_packet.py`: fail-closed validation for independent
+  Coding Agent session packets, pinned bases, dependencies, path leases,
+  validation, review, integration, and retirement policy.
 
 ## Recommended Adoption Path
 
@@ -88,7 +91,9 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
    changes, gates, or agents.
 5. For multi-agent or multi-session work, instantiate
    `templates/DELIVERY_GRAPH.template.json`, validate its ready wave, and
-   bootstrap gitignored `.coord/` from the coordination templates.
+   bootstrap gitignored `.coord/` from the coordination templates. Issue each
+   independent Coding Agent session a validated
+   `templates/SESSION_TASK_PACKET.template.md`.
 6. When related products will converge, keep their development isolated and
    bind exact release candidates plus versioned envelopes in
    `templates/CROSS_PROJECT_INTEGRATION_PACKET.template.md`.
@@ -103,6 +108,9 @@ for module-first placement, snapshot budgets, cleanup, and incremental migration
 See [Throughput-Oriented Delivery](docs/19-throughput-oriented-delivery.md)
 for top-down dependency graphs, `.coord` execution, asynchronous review,
 bulk-change partitioning, related-product convergence, and periodic distillation.
+See [Multi-Session Team Execution](docs/20-multi-session-team-execution.md) for
+turning delivery-graph lanes into pinned, isolated, lease-bounded task packets
+that a human can dispatch across several Coding Agent sessions.
 
 ## Primary References
 
