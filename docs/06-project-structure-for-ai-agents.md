@@ -6,9 +6,13 @@ At the root:
 
 - `AGENTS.md`: stable agent instructions.
 - `README.md`: product and setup overview.
-- `NEXT_TODO.md`: current roadmap, phase status, deletion gates.
-- `PROGRESS.md`: recent progress and handoff summary.
-- `docs/`: contracts, runtime modes, testing, architecture.
+- `NEXT_TODO.md`: bounded current/blocked/next snapshot that links to module
+  work items and deletion gates.
+- `PROGRESS.md`: bounded current-state and recent-handoff snapshot that links to
+  durable evidence.
+- `docs/README.md`: problem-to-module documentation router.
+- `docs/`: module-owned contracts, product artifacts, runtime modes, testing,
+  architecture, operations, migrations, and decisions.
 - `scripts/`: repeatable developer and CI commands.
 - `tests/`: unit, contract, integration, smoke.
 - `artifacts/` or `var/`: generated local outputs that are useful for review
@@ -56,6 +60,19 @@ For large codebases, include lightweight module maps:
 - Runtime modes
 - Test commands
 - Migration status
+
+Prefer module-first document paths such as
+`docs/modules/<module>/contracts/` and
+`docs/modules/<module>/operations/` over a flat project-wide document folder.
+Keep genuinely cross-module material under `docs/project/`, with one explicit
+owner and links to each affected module.
+
+Use root TODO/progress files as replaceable snapshots, not append-only stores.
+Detailed work, contract, product, testing, and operational content belongs in
+the owning module and is reached through the project and module indexes. See
+[Documentation Routing and Lifecycle](18-documentation-routing-and-lifecycle.md)
+and the copyable [`DOCS_INDEX`](../templates/DOCS_INDEX.template.md) and
+[`MODULE_INDEX`](../templates/MODULE_INDEX.template.md) templates.
 
 ## Generated Artifact Boundaries
 

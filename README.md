@@ -19,7 +19,10 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Production-like test isolation early: use real dependencies where behavior matters, isolated data, fake providers, and separate local/scripted/live/prod modes.
 - Durable execution for long workflows: append-only event log, typed commands/outbox, activity attempts, idempotency, leases, retry policy, and materialized current state.
 - Agent-safe surfaces: agents should operate through operation/action/command APIs, not mutate domain tables directly.
-- Documentation is runtime infrastructure: `AGENTS.md`, `NEXT_TODO.md`, `PROGRESS.md`, contracts, and signoff docs should stay close to the code.
+- Documentation is runtime infrastructure: route problems through a project
+  index into module-owned contracts, product artifacts, tests, and runbooks;
+  keep root `NEXT_TODO.md` and `PROGRESS.md` as bounded snapshots rather than
+  unbounded stores.
 - Reviews need packets, not just prompts: design, implementation, and adoption reviews should receive explicit artifacts, boundaries, evidence classes, validation output, and claims to verify.
 - Plan-only artifacts before risky execution: external calls, cache writes, scheduled jobs, and publication should be preceded by reviewable plans that keep execution flags false.
 - Schema and storage before code: define artifact shape, visibility, write mode, retention, redaction, and downstream consumers before building producers.
@@ -64,20 +67,27 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - `AGENTS.md`: baseline instructions for AI coding agents working in a repository.
 - `docs/`: practices and rationale.
 - `templates/`: copyable project files for new repositories, including
-  contracts, review packets, phase registries, prompts, and signoff docs.
+  documentation routers, module indexes, contracts, review packets, phase
+  registries, prompts, and signoff docs.
 - `examples/`: concrete contract, phase, review-gate, and preflight examples.
 
 ## Recommended Adoption Path
 
 1. Copy `templates/AGENTS.template.md` into the project root as `AGENTS.md`.
-2. Add `templates/NEXT_TODO.template.md` and `templates/PROGRESS.template.md`.
-3. Add `templates/PHASE_REGISTRY.template.yaml` when work will span multiple
+2. Create `docs/README.md` from `templates/DOCS_INDEX.template.md` and a module
+   router from `templates/MODULE_INDEX.template.md` for each active module.
+3. Add `templates/NEXT_TODO.template.md` and `templates/PROGRESS.template.md` as
+   bounded root snapshots that link to module-owned detail.
+4. Add `templates/PHASE_REGISTRY.template.yaml` when work will span multiple
    changes, gates, or agents.
-4. For every shared feature, start with `templates/CONTRACT.template.md`.
-5. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
-6. Add one fast contract preflight before adding or relying on a long nightly test.
-7. Split environments into local dev, scripted/fake-provider, local live, and production.
-8. Move long-running workflows toward typed events, commands, activities, and current-state projections.
+5. For every shared feature, start with `templates/CONTRACT.template.md`.
+6. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
+7. Add one fast contract preflight before adding or relying on a long nightly test.
+8. Split environments into local dev, scripted/fake-provider, local live, and production.
+9. Move long-running workflows toward typed events, commands, activities, and current-state projections.
+
+See [Documentation Routing and Lifecycle](docs/18-documentation-routing-and-lifecycle.md)
+for module-first placement, snapshot budgets, cleanup, and incremental migration.
 
 ## Primary References
 

@@ -5,11 +5,17 @@
 Use repository-local instructions to keep agents aligned:
 
 - `AGENTS.md`: stable rules, architecture constraints, commands, verification expectations.
-- `NEXT_TODO.md`: phase plan, open items, deletion gates, known blockers.
-- `PROGRESS.md`: current state, recent decisions, validation, handoff notes.
+- `docs/README.md`: problem-to-module router for canonical documentation.
+- `NEXT_TODO.md`: bounded current/blocked/next snapshot with links to module
+  work items, deletion gates, and known blockers.
+- `PROGRESS.md`: bounded current-state and recent-handoff snapshot with links to
+  durable decisions and validation evidence.
 - Contract docs: source of truth for shared semantics.
 
-Keep root instruction files concise. Put detailed domain contracts in `docs/` and link to them from `AGENTS.md`.
+Keep root instruction and snapshot files concise. Put detailed domain
+contracts, product artifacts, testing guidance, and runbooks in module-owned
+directories and route them through `docs/README.md` and module indexes. See
+[Documentation Routing and Lifecycle](18-documentation-routing-and-lifecycle.md).
 
 ## Task Brief Format
 

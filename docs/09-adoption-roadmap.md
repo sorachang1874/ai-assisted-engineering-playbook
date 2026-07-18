@@ -3,13 +3,17 @@
 ## Day 0: Seed the Project
 
 - Add `AGENTS.md`.
-- Add `NEXT_TODO.md`.
-- Add `PROGRESS.md`.
+- Add `docs/README.md` as the problem-to-module documentation router.
+- Add `NEXT_TODO.md` and `PROGRESS.md` as bounded snapshots with owners,
+  refresh dates, size budgets, and links to durable module artifacts.
 - Add basic test commands.
 - Document runtime modes.
 
 ## Week 1: Make Contracts Visible
 
+- Add module indexes and route existing documents without moving them yet.
+- Add a documentation migration/retirement registry for duplicate, stale, and
+  legacy paths.
 - Write contracts for core APIs and shared states.
 - Add owner matrix for user-visible fields.
 - Add first contract preflight.
@@ -68,3 +72,5 @@ After every milestone:
   fixtures as explicit follow-up items.
 - Update review-gate triggers when a user correction or incident reveals that a
   boundary should have been caught before implementation.
+- Audit documentation routes, replace stale root snapshot entries, and retire
+  or archive documents whose deletion conditions passed.
