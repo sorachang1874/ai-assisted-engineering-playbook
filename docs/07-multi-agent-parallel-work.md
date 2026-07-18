@@ -208,6 +208,10 @@ Each worker handoff should include:
 
 The lead agent should not rely on chat memory. It should be able to verify from files and commands.
 
+This artifact closes *completed* work. A session interrupted mid-task cannot produce it, so the
+in-flight unit of handoff is smaller and earlier: WIP commits on the lane branch plus a current
+resume card in the status file — see `21-interruption-safe-handoff.md`.
+
 ## Conflict Prevention
 
 Before parallel work:
@@ -221,6 +225,17 @@ Before parallel work:
   both edit it" is an unmodelled serialization edge, not a parallel plan.
 
 ## Agent Failure Modes To Plan For
+
+- Sessions die mid-task with their state in their own context: a quota wall,
+  crash, or expired model lease kills the session and everything it never
+  wrote down. One forked remediation session died at a quota wall four minutes
+  after fork, leaving an uncommitted source edit, a stale digest pin that
+  broke validation, and a split plan that existed only in its parent's session
+  log; the resumer — a different tool entirely — paid session archaeology
+  before its first edit. The defense is recording, not redundancy: commit WIP
+  to the lane branch at every boundary, keep the resume card current, and
+  record the dispatch plan before forking
+  (`21-interruption-safe-handoff.md`).
 
 - Output-size limits kill whole-file emitters: an agent asked to produce a
   large precision file (hundreds of lines of fail-closed logic) can

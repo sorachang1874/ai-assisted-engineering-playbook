@@ -77,11 +77,35 @@ hotspot release, dependency commit, or user request):
 The lane owner verifies `HEAD == base_commit` before editing. If the session
 discovers a new write path, contract direction, destructive action, live cost,
 or hotspot collision, it stops and writes the question into the handoff. It
-does not widen the packet locally.
+does not widen the packet locally. In a shared checkout it never stashes,
+stages, reads, or formats another session's dirty files — the packet's
+worktree preflight forbids adopting them — and a suspicious test failure is
+attributed by running the exact failing node in a clean pinned worktree (the
+baseline-attribution lane, `19-throughput-oriented-delivery.md` § Validation
+Cost Belongs in the Graph), never by flipping the shared tree.
 
 Keep commits lane-local. Documentation and tests may be separate lanes when
 their contracts are already frozen and their paths are disjoint; otherwise
 they remain with the implementation owner or wait for the integration lane.
+
+## Interruption Safety
+
+A session can die mid-task — quota wall, crash, expired model lease — and its
+context dies with it. Two habits keep the lane resumable by a cold,
+different-tool successor:
+
+- Commit to the lane branch at every natural boundary, `wip:` commits
+  included. Integration consumes commits or immutable handoffs, never dirty
+  files, so early commits cost nothing; uncommitted bytes are attributable
+  only by mtime forensics.
+- Keep the lane's resume card current in its `.coord` status file: goal, base
+  commit, touched paths, last validation command and result, state, next step.
+
+The full recording protocol, the lead's dead-lane recovery sequence, and the
+session-archaeology runbook for when records are missing are in
+[`21-interruption-safe-handoff.md`](21-interruption-safe-handoff.md). A dead
+session is not automatically a stale packet: recover card, branch, and
+validation state before retiring anything.
 
 ## Dependency Waves and Review
 
@@ -118,12 +142,21 @@ negative evidence, and the next node unblocked. The integration lead then:
 Integration by copied dirty files is forbidden. Consume a commit, a reviewed
 contract packet, or an immutable handoff artifact.
 
+Scope is part of the lease check: compare the landed diff's size and shape
+with the packet's declared deliverable, not only its paths. An over-built lane
+is pushed back to its bounded scope before integration, not integrated because
+it is already written — one minimal SQL-fence lane grew to ~431 lines in
+flight and was pushed back to +265 before its commit was consumed.
+
 ## Stale Packet Retirement
 
 A packet becomes stale when its revalidation deadline passes, its base or
 dependency is superseded, its hotspot turn changes, another diff enters its
 write set, or the canonical contract changes. Time expiry alone does not
-authorize takeover.
+authorize takeover. Nor does a silent session: a lane that has gone quiet is
+recovered first — card, branch, validation state — per
+[`21-interruption-safe-handoff.md`](21-interruption-safe-handoff.md), because
+its WIP commits may make it cheaply resumable from its own state.
 
 The integration lead marks the old packet `retired` or `superseded`, records
 the reason and replacement packet id, and issues a new packet from the new

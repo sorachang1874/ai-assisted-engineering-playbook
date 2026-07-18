@@ -101,7 +101,10 @@ Every handoff should include:
 - Residual risks
 - Next action
 
-The next agent should be able to resume without relying on chat history.
+The next agent should be able to resume without relying on chat history. For
+the in-flight version of this rule — WIP commits, a per-lane resume card, and
+recovery from a session that dies mid-task — see
+[Interruption-Safe Handoff and Session Resume](21-interruption-safe-handoff.md).
 
 If a missing dependency blocks context acquisition or verification, record it as
 a follow-up with the impacted artifact. Examples include missing browser

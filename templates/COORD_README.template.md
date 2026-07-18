@@ -57,6 +57,11 @@ links exact release-candidate commits rather than sharing mutable runtime files.
 
 - Write only your lane's declared paths and your own `.coord` files.
 - Never edit another agent's status or handoff.
+- Keep your status file resumable by a cold, different-tool successor: goal,
+  base commit, touched paths, last validation command and result, current
+  state, and the exact next step. Commit WIP to your lane branch at every
+  natural boundary — uncommitted progress is invisible to the lease, the
+  board, and whoever resumes a lane whose session died mid-task.
 - Append questions/corrections; do not rewrite published log entries.
 - A contract-direction change, new write path, hotspot conflict, destructive
   operation, or premature cross-project call stops the lane and returns it to

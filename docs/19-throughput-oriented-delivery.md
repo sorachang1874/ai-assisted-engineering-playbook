@@ -138,6 +138,19 @@ depend on the owner lane and enter the recorded writer order later.
 Two agents must not "coordinate carefully" while concurrently editing the same
 file. That is an unmodelled serialization edge. Put the edge in the graph.
 
+Generated and hash-chained artifacts are a distinct hotspot class. A fixture
+bundle, a cross-project schema-pin file, or a self-hashing evidence chain has
+no valid intermediate value: its content is a digest function of *all*
+contributing lanes' outputs, so hotspot writer order cannot help — whichever
+lane writes it mid-flight produces a value the next landing lane invalidates.
+Model such artifacts as an explicit regeneration node owned by the integration
+lead, depending on every contributing lane and running once after they land.
+One orchestrator splitting a two-project remediation reserved fixture
+regeneration, cross-project schema-pin updates, and the consumer preview
+refresh for itself for exactly this reason — the self-hash chain must not be
+concurrently corrupted; lanes shipped sources and inputs, the lead regenerated
+once.
+
 ### 6. Add validation, review, repair, integration, and promotion nodes
 
 Implementation is not terminal. Model what follows so the lead can start
@@ -342,7 +355,9 @@ Otherwise improve the plan or finish the current wave.
 - [ ] The graph validator passes and prints the intended ready wave.
 - [ ] `.coord/` is gitignored; each agent owns one status file; lead owns board
       and graph.
-- [ ] Shared contracts/hotspots have one writer and a merge order.
+- [ ] Shared contracts/hotspots have one writer and a merge order;
+      generated/hash-chained artifacts are a lead-owned regeneration node
+      after all contributing lanes, never a mid-flight write.
 - [ ] Rebuildable reviews block promotion, not unrelated work; destructive,
       live, paid, or non-rebuildable work keeps a blocking review edge.
 - [ ] Bulk work has generated inventory, verified classification, pilot,

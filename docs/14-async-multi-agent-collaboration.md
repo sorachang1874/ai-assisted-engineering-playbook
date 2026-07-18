@@ -64,6 +64,11 @@ A practical SSOT that makes this work: one Lead-maintained **project-status snap
 "read it first" habit in `AGENTS.md` itself, so a fresh instance self-orients without the human
 re-explaining. (Don't rely on per-prompt reminders; encode the habit in the standing rules.)
 
+The same rule covers in-flight execution plans: a surface split, wave plan, or fork charter that
+exists only in the orchestrator's session context is invisible even to its own dispatched lanes —
+record it in the graph or `.coord/` when it is decided, before the sessions executing it start
+(`21-interruption-safe-handoff.md`).
+
 ## The live channel, concretely
 
 A minimal file-based channel needs no broker, daemon, MCP, or A2A layer — deliberately. Two or three
@@ -91,6 +96,11 @@ Conventions that prevent the races:
 - **Per-agent status files, never a shared status block.** Each agent edits only its own file, so two
   agents never contend on the same line. Last-writer-wins is fine for the board because the
   one-owner-per-row map means the two agents edit *different* rows.
+- **The status file doubles as the lane's resume card.** It has two readers: the lead's sweep, and a
+  cold resumer — possibly a different tool or model family — picking the lane up after its owner dies
+  mid-task. It must carry goal, base commit, touched paths, last validation, state, and next step,
+  with no references to conversation; the card format and the dead-lane recovery protocol are in
+  `21-interruption-safe-handoff.md`.
 - **Append-only log with author-embedded filenames.** `NNN-<author>-<kind>.md` means two agents writing
   at the same instant produce *distinct* files — no lost update, no locks. To revise a published entry,
   append a `correction` referencing the old number; never edit it in place.
