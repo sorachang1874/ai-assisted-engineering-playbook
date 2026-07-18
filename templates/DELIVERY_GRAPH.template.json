@@ -1,0 +1,209 @@
+{
+  "schema_version": "delivery_graph.v1",
+  "run_id": "replace-with-stable-run-id",
+  "objective": "Name the consumer-visible capability and its proof.",
+  "integration_owner": "replace-with-lead-id",
+  "graph_owner_path": "docs/modules/<module>/operations/<run>-delivery-graph.json",
+  "distillation": {
+    "owner": "replace-with-owner-id",
+    "candidate_path": ".coord/distill/",
+    "cadence": [
+      "milestone_boundary",
+      "weekly_while_active",
+      "same_mechanism_twice",
+      "avoidable_rework_over_30m"
+    ]
+  },
+  "hotspots": [
+    {
+      "id": "shared-contract",
+      "paths": [
+        "docs/modules/<module>/contracts/shared.md"
+      ],
+      "integration_owner": "replace-with-lead-id",
+      "writer_order": [
+        "freeze-contract",
+        "retire-bridge"
+      ],
+      "release_condition": "Review is recorded before implementation; retirement follows all consumers."
+    }
+  ],
+  "lanes": [
+    {
+      "id": "freeze-contract",
+      "kind": "decision",
+      "owner": "replace-with-lead-id",
+      "status": "proposed",
+      "depends_on": [],
+      "blocked_by": [],
+      "reads": [
+        "src/<module>/**"
+      ],
+      "writes": [
+        "docs/modules/<module>/contracts/shared.md"
+      ],
+      "hotspot_claims": [
+        "shared-contract"
+      ],
+      "deliverable": "A frozen owner/schema/consumer contract.",
+      "validation": [
+        "replace-with-exact-command-and-expected-result"
+      ],
+      "stop_condition": "Contract shape, owners, and non-goals are mechanically checkable.",
+      "handoff_path": ".coord/handoffs/freeze-contract.md",
+      "gate": {
+        "mode": "blocking_before_execution",
+        "review_lane": "review-contract",
+        "protected_lanes": [
+          "implement-first-slice"
+        ]
+      }
+    },
+    {
+      "id": "review-contract",
+      "kind": "review",
+      "owner": "replace-with-non-author-reviewer-id",
+      "status": "proposed",
+      "depends_on": [
+        "freeze-contract"
+      ],
+      "blocked_by": [],
+      "reads": [
+        "docs/modules/<module>/contracts/shared.md"
+      ],
+      "writes": [
+        "runtime/reviews/<pinned-contract-review>.md"
+      ],
+      "hotspot_claims": [],
+      "deliverable": "A pinned, scoped review artifact.",
+      "validation": [
+        "replace-with-review-artifact-verifier-command"
+      ],
+      "stop_condition": "The artifact is valid and has a terminal verdict.",
+      "handoff_path": ".coord/handoffs/review-contract.md",
+      "gate": {
+        "mode": "none",
+        "review_lane": "",
+        "protected_lanes": []
+      }
+    },
+    {
+      "id": "implement-first-slice",
+      "kind": "implementation",
+      "owner": "replace-with-worker-id",
+      "status": "proposed",
+      "depends_on": [
+        "review-contract"
+      ],
+      "blocked_by": [],
+      "reads": [
+        "docs/modules/<module>/contracts/shared.md"
+      ],
+      "writes": [
+        "src/<module>/first_slice.py",
+        "tests/test_first_slice.py"
+      ],
+      "hotspot_claims": [],
+      "deliverable": "One consumer-visible vertical slice with regression coverage.",
+      "validation": [
+        "replace-with-targeted-test-command-and-expected-count"
+      ],
+      "stop_condition": "The vertical slice passes targeted contract and consumer tests.",
+      "handoff_path": ".coord/handoffs/implement-first-slice.md",
+      "gate": {
+        "mode": "async_before_promotion",
+        "review_lane": "review-first-slice",
+        "protected_lanes": [
+          "promote-first-slice"
+        ]
+      }
+    },
+    {
+      "id": "review-first-slice",
+      "kind": "review",
+      "owner": "replace-with-non-author-reviewer-id",
+      "status": "proposed",
+      "depends_on": [
+        "implement-first-slice"
+      ],
+      "blocked_by": [],
+      "reads": [
+        "src/<module>/first_slice.py",
+        "tests/test_first_slice.py"
+      ],
+      "writes": [
+        "runtime/reviews/<pinned-implementation-review>.md"
+      ],
+      "hotspot_claims": [],
+      "deliverable": "Pinned review or a bounded fixed-forward finding set.",
+      "validation": [
+        "replace-with-review-artifact-verifier-command"
+      ],
+      "stop_condition": "The result is valid and every finding is classified.",
+      "handoff_path": ".coord/handoffs/review-first-slice.md",
+      "gate": {
+        "mode": "none",
+        "review_lane": "",
+        "protected_lanes": []
+      }
+    },
+    {
+      "id": "promote-first-slice",
+      "kind": "promotion",
+      "owner": "replace-with-lead-id",
+      "status": "proposed",
+      "depends_on": [
+        "review-first-slice"
+      ],
+      "blocked_by": [],
+      "reads": [
+        "runtime/reviews/<pinned-implementation-review>.md"
+      ],
+      "writes": [
+        "docs/modules/<module>/operations/<promotion-record>.md"
+      ],
+      "hotspot_claims": [],
+      "deliverable": "A scope-matched promotion decision.",
+      "validation": [
+        "replace-with-promotion-preflight-command"
+      ],
+      "stop_condition": "The reviewed artifact is eligible for promotion.",
+      "handoff_path": ".coord/handoffs/promote-first-slice.md",
+      "gate": {
+        "mode": "none",
+        "review_lane": "",
+        "protected_lanes": []
+      }
+    },
+    {
+      "id": "retire-bridge",
+      "kind": "migration",
+      "owner": "replace-with-worker-id",
+      "status": "proposed",
+      "depends_on": [
+        "promote-first-slice"
+      ],
+      "blocked_by": [],
+      "reads": [
+        "src/<module>/**"
+      ],
+      "writes": [
+        "docs/modules/<module>/contracts/shared.md"
+      ],
+      "hotspot_claims": [
+        "shared-contract"
+      ],
+      "deliverable": "The temporary bridge is removed after its deletion condition passes.",
+      "validation": [
+        "replace-with-old-path-zero-usage-command"
+      ],
+      "stop_condition": "All consumers use canonical behavior and bridge usage is zero.",
+      "handoff_path": ".coord/handoffs/retire-bridge.md",
+      "gate": {
+        "mode": "none",
+        "review_lane": "",
+        "protected_lanes": []
+      }
+    }
+  ]
+}

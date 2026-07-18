@@ -23,6 +23,10 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
   index into module-owned contracts, product artifacts, tests, and runbooks;
   keep root `NEXT_TODO.md` and `PROGRESS.md` as bounded snapshots rather than
   unbounded stores.
+- Optimize the delivery graph, not agent utilization: freeze shared decisions,
+  dispatch only dependency-ready lanes with disjoint writes, model review as an
+  edge to promotion, and continuously distill failures and avoidable work into
+  executable improvements.
 - Reviews need packets, not just prompts: design, implementation, and adoption reviews should receive explicit artifacts, boundaries, evidence classes, validation output, and claims to verify.
 - Plan-only artifacts before risky execution: external calls, cache writes, scheduled jobs, and publication should be preceded by reviewable plans that keep execution flags false.
 - Schema and storage before code: define artifact shape, visibility, write mode, retention, redaction, and downstream consumers before building producers.
@@ -70,6 +74,8 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
   documentation routers, module indexes, contracts, review packets, phase
   registries, prompts, and signoff docs.
 - `examples/`: concrete contract, phase, review-gate, and preflight examples.
+- `scripts/check_delivery_graph.py`: standard-library validation for delivery
+  dependencies, shared write hotspots, and review-to-promotion edges.
 
 ## Recommended Adoption Path
 
@@ -80,14 +86,23 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
    bounded root snapshots that link to module-owned detail.
 4. Add `templates/PHASE_REGISTRY.template.yaml` when work will span multiple
    changes, gates, or agents.
-5. For every shared feature, start with `templates/CONTRACT.template.md`.
-6. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
-7. Add one fast contract preflight before adding or relying on a long nightly test.
-8. Split environments into local dev, scripted/fake-provider, local live, and production.
-9. Move long-running workflows toward typed events, commands, activities, and current-state projections.
+5. For multi-agent or multi-session work, instantiate
+   `templates/DELIVERY_GRAPH.template.json`, validate its ready wave, and
+   bootstrap gitignored `.coord/` from the coordination templates.
+6. When related products will converge, keep their development isolated and
+   bind exact release candidates plus versioned envelopes in
+   `templates/CROSS_PROJECT_INTEGRATION_PACKET.template.md`.
+7. For every shared feature, start with `templates/CONTRACT.template.md`.
+8. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
+9. Add one fast contract preflight before adding or relying on a long nightly test.
+10. Split environments into local dev, scripted/fake-provider, local live, and production.
+11. Move long-running workflows toward typed events, commands, activities, and current-state projections.
 
 See [Documentation Routing and Lifecycle](docs/18-documentation-routing-and-lifecycle.md)
 for module-first placement, snapshot budgets, cleanup, and incremental migration.
+See [Throughput-Oriented Delivery](docs/19-throughput-oriented-delivery.md)
+for top-down dependency graphs, `.coord` execution, asynchronous review,
+bulk-change partitioning, related-product convergence, and periodic distillation.
 
 ## Primary References
 

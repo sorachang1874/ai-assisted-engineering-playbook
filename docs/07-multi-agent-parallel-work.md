@@ -44,6 +44,12 @@ zeroes the batch instead of degrading it (principle 35). So before fanning tasks
 asserts the model routing is declared in the checked-in routing table
 (`templates/MODEL_ROUTING.template.yaml`):
 
+- A checked-in delivery graph exists for work spanning more than one lane, and
+  `python scripts/check_delivery_graph.py <graph> --ready` passes. Dispatch only
+  the printed ready wave. The graph, not agent availability, decides width.
+- Every lane declares exact writes, validation, a stop condition, and a handoff;
+  shared write paths have one registered hotspot, integration owner, and
+  dependency-ordered writer list. An unregistered overlap fails dispatch.
 - The routing table exists.
 - Every lane names a fallback.
 - No review lane's fallback resolves to the author's model family — the independence lane of
@@ -65,6 +71,11 @@ asserts the model routing is declared in the checked-in routing table
   lanes with no completed checkpoint (`16-loops-and-model-composition.md` § Loop Hygiene) — a
   relaunch that would re-run a completed lane fails, and the handoff's resumed-from field records
   the lanes re-dispatched.
+
+The complete planning and scheduling protocol is in
+`19-throughput-oriented-delivery.md`. Use
+`templates/DELIVERY_GRAPH.template.json`; do not reconstruct dependencies or
+partition maps separately in worker prompts.
 
 ## Independent Review Gate
 
@@ -206,6 +217,8 @@ Before parallel work:
 - Define validation commands.
 - Define no-touch areas.
 - Define merge order.
+- Register every shared write hotspot in the delivery graph; "coordinate while
+  both edit it" is an unmodelled serialization edge, not a parallel plan.
 
 ## Agent Failure Modes To Plan For
 

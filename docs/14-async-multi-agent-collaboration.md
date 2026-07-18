@@ -72,13 +72,21 @@ agents plus a human do not need lease machinery; they need clear ownership and a
 ```
 .coord/                 # gitignored, local, both instances read/write the same path
   README.md             # the rules in brief (read first)
-  BOARD.md              # mutable task table: task-id | owner | status | branch/PR | verify | expected-done | note
+  BOARD.md              # lead-owned live projection of the checked-in delivery graph
   status-<agent>.md     # one per agent; an agent writes ONLY its own (heartbeats never collide)
+  handoffs/<lane-id>.md # immutable handoff per completed attempt
+  distill/<stamp>-<agent>.md # append-only failure/inefficiency candidates
   log/
     NNN-<author>-<kind>.md   # append-only ledger; never edit a published entry
 ```
 
 Conventions that prevent the races:
+
+- **The checked-in delivery graph owns scheduling; the board only projects it.**
+  Dependency edges, write paths, hotspots, gate policy, and promotion edges are
+  normative and lead-owned in Git. The board may say who is active, but cannot
+  make an incomplete lane ready. Validate and dispatch only the graph's ready
+  wave (`19-throughput-oriented-delivery.md`).
 
 - **Per-agent status files, never a shared status block.** Each agent edits only its own file, so two
   agents never contend on the same line. Last-writer-wins is fine for the board because the
@@ -102,6 +110,10 @@ Conventions that prevent the races:
 - **Hygiene as a standing chore.** Archive the log once it passes ~20 entries; keep the board to *active*
   tasks only (done milestones sink into the project-status snapshot). A live channel that accretes
   forever stops being read.
+- **Distill without interrupting delivery.** Any agent may append a candidate
+  for a repeated failure or avoidable-work mechanism. A separate lead-scheduled
+  lane synthesizes candidates at milestone/weekly triggers; raw observations do
+  not mutate the active plan or become principles by themselves.
 
 ## Why one lead, not N equals
 
@@ -167,8 +179,14 @@ that the separate-process reality does not actually deliver.
       lead current.
 - [ ] Per-agent status files; append-only log with global monotonic numbering; per-task `verify:`
       and `expected-done:`; a patch-shaped request template; periodic archival.
+- [ ] A checked-in, lead-owned delivery graph validates dependencies, exact
+      writes, hotspots, review/promotion edges, and the ready wave; `.coord` is
+      only its live projection.
 - [ ] Contracts frozen before fan-out (slice by slice for refactors, with a double-run equivalence test
       and a deletion gate for any transitional compatibility layer; determinism checklist:
       `03-testing-strategy.md`).
 - [ ] After a peer merges, rebase on main; verify any squash captured the intended content by grepping
       the merged result, not by assumption.
+- [ ] Distill candidates capture failures and inefficient behavior
+      asynchronously; bounded synthesis runs at milestones, weekly, or on a
+      recurrence/cost trigger.

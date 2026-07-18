@@ -80,6 +80,15 @@ Use parallel agents only when work is owner-bounded:
 
 Avoid multiple agents editing the same contract or schema unless one lead agent owns the merge.
 
+For multi-step work, make those boundaries executable in a checked-in delivery
+graph before dispatch. The graph declares dependency edges, exact write sets,
+shared hotspots, validation, review, and promotion. A lane is ready only when
+its dependencies are complete and its writes cannot race another ready lane.
+Use `.coord/` only as the gitignored live projection of that durable graph.
+
+See [Throughput-Oriented Delivery](19-throughput-oriented-delivery.md) and
+[`DELIVERY_GRAPH.template.json`](../templates/DELIVERY_GRAPH.template.json).
+
 ## Handoff Rules
 
 Every handoff should include:
