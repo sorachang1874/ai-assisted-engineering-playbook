@@ -27,7 +27,7 @@ REQUIRED_SECTIONS = (
 LANE_HEADER_RE = re.compile(r"^###\s+lane\s+`(?P<lane>[^`]+`)\s+—\s*(?P<title>.*)$")
 FIELD_RE = re.compile(r"^-\s+(?P<name>[A-Za-z][A-Za-z /]*):\s*(?P<value>.*)$")
 STATE_RE = re.compile(
-    r"^(dispatched|in_progress|validating|delivered|integrated|blocked|pending)"
+    r"^(dispatched|in_progress|validating|delivered|integrated|blocked|pending|fixed-forward)"
     r"(-[a-z_]+)*$"
 )
 
