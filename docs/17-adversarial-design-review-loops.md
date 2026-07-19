@@ -91,7 +91,47 @@ ask about shared unique-constraint interactions.)
   legitimately needed ~15 minutes; several historical "transport failures" were really timeout
   misconfiguration. Make the timeout an explicit parameter and default it generously.
 
-## 3. What the loop is for
+## 3. Channel fallback under a quota wall
+
+A hard quota wall on the reviewer's primary account (observed: 10 days) freezes every gated review
+when the pinned model is reachable only through that channel. The fallback that preserves the gate
+changes the **channel**, never the model: the reviewer policy (model/effort/tier) stays
+byte-identical, and only the transport moves to an operator-selected OpenAI-compatible relay serving
+the same model. This is principle 35 applied to the reviewer lane itself — quota exhaustion routes
+to an operator-selected recorded fallback, never an improvised silent downgrade, because a different
+model's verdict is not the pinned reviewer's verdict.
+
+The working sequence, each step verified before the next is trusted:
+
+1. **Probe the channel before trusting it.** A models-listing request and one completion at the
+   pinned reasoning effort must return the same model's echo; without the probe the gate cannot
+   distinguish "same model over a new wire" from a quiet reroute. Credentials live in the OS
+   keychain (for example, macOS Keychain service `codex-env`), never in the config file.
+2. **Rebuild the isolated reviewer home, then patch the channel.** Rebuild the dedicated
+   `CODEX_HOME` from the bootstrap script (§ 2), add a `[model_providers.<relay>]` block
+   (`base_url`, `env_key`, `wire_api = "responses"`), and set top-level `model_provider`. TOML
+   placement matters: a table block absorbs the bare keys that follow it, so the provider block
+   belongs immediately before the next `[table]` header — a misplaced block surfaced as
+   `unknown configuration field 'model_providers.x.notify'`.
+3. **Verify the scope mode before spending the review.** Runner scope paths are project-relative
+   *without* the repository-directory prefix; passing `--file <repo>/<path>` when the project root
+   already is `<repo>/` produced an empty `reference_only_worktree` scope — a P0, because that
+   review binds nothing. Confirm the emitted scope mode is `pinned_commit_diff` first.
+4. **Evidence verification runs unchanged.** Effective model/effort/tier from thread start, no
+   reroute, causal binding of prompt/output/turn — all must pass over the relay exactly as over the
+   primary channel. A channel that cannot produce hash-verified rollout evidence is not a fallback;
+   it is a gap.
+5. **Record the fallback as operator-owned policy.** The checked-in reviewer policy names the
+   channel, and every artifact executed via the relay names the channel in its metadata
+   (`13-operator-decisions-and-evidence-integrity.md`).
+
+A fail-closed invalidation on the fallback path is not a lost review: one of two relay reviews
+failed causal binding on `final_response_item_exact` (final rollout message vs. final output
+mismatch), the gate correctly invalidated the artifact, and the findings still fed a fixed-forward
+lane as advisory input; the rerun after the fix re-bound cleanly. Treat relay transcript fidelity
+as a suspect dimension until the channel has a clean binding record.
+
+## 4. What the loop is for
 
 Run it when a design introduces distributed/concurrent/paid/multi-owner semantics and the
 implementation seat is the bottleneck (the review loop costs reviewer tokens, not implementer

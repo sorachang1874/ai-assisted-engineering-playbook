@@ -200,7 +200,10 @@ fact.
 
   The Dispatch Preflight (`07-multi-agent-parallel-work.md`) fails only on a missing lease block or
   a lane whose primary is past its declared `expires`; `expires: none` is legal and passes. Quota
-  behavior stays where it already lives: the lane's `on_quota_exhaustion`.
+  behavior stays where it already lives: the lane's `on_quota_exhaustion`. For the
+  independent-review lane specifically, the recorded quota fallback is a channel change with a
+  byte-identical reviewer policy — never a model substitution:
+  `17-adversarial-design-review-loops.md` § 3.
 
 ## Harness Self-Improvement Boundaries
 
