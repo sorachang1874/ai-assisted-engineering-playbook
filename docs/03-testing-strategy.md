@@ -59,6 +59,55 @@ gating lane that green is not evidence (principle 40): a skip is a hidden fallba
   surfaced in the run summary the operator reads, never buried — skipped is a reportable
   outcome, not noise.
 
+## Custom-Loader Harnesses Rot Silently
+
+When tests load a shared module through a custom loader — a Node VM with a
+hand-rolled `require`, a transpile shim, a bundler alias — the loader's
+dependency map is part of the test contract. Adding an import to the shared
+module is a breaking change to every harness that loads it, and it breaks at
+module resolution, in harness initialization, with errors that look like
+product failures. Twice in one repository, a heavily imported module
+(`api.ts`) gained an import and every VM harness with a hand-rolled `require`
+failed at load time; both times the first debugging minutes went into product
+code that had never run.
+
+- **One static-dependency block per harness, fail-fast.** Stubs for modules
+  the tests must never exercise throw an explicit "harness stub: module X is
+  not loadable in this harness" error; real contract modules load through the
+  same compiled path the product uses. A new dependency is added in exactly
+  one marker-delimited place, not discovered loader call site by loader call
+  site.
+- **Resolution errors must present as harness initialization failures**, not
+  as product assertion failures. The first diagnostic question — did the
+  subject even load? — should answer itself from the error text.
+- **Repair one, sweep the class.** When a shared module's new dependency
+  breaks one loader, search for every sibling harness with the same latent
+  defect: the same repository held eight `api.ts`-loading harnesses, only one
+  was broken, and the class was proven twice — the verify-the-class discipline
+  of the classify-then-edit sweep (`07-multi-agent-parallel-work.md`).
+
+## Setup Functions Must Leave the Environment Fully Usable
+
+A setup/prepare function that provisions an ephemeral environment — a fresh
+schema, container, or sandbox — must leave it fully usable: schema *and*
+versioned migrations *and* seeds. Call sites written against the old contract
+never learn about a new precondition. One repository's isolated-test-runtime
+setup created a fresh PG schema but did not apply migrations; when a later
+change made the seed path require authoritative tables, every fresh-schema run
+failed at seeding — including the exact commands the testing playbook
+documented, which had been silently broken.
+
+- **Fix in the shared prepare function, not at call sites.** Creating the
+  schema and applying migrations in one place repaired every caller at once;
+  patching call sites would have left the next one broken.
+- **Regression-assert the end state, not the steps:** a freshly provisioned
+  environment is fully migrated, and the setup is idempotent — safe to run
+  twice against the same target.
+- **Documented but never executed is a decaying asset.** Any documented
+  operational flow needs periodic execution or a cheap fresh-environment
+  regression test; documented commands nobody runs are prose-only norms, and
+  prose binds nobody (principle 28).
+
 ## Hostile Fakes and the Revisit Leg
 
 A fake is an implicit claim about which properties of the real dependency matter, and CI's reward
