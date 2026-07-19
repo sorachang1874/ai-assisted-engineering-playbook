@@ -116,6 +116,13 @@ integration line.
 See [Interruption-Safe Handoff and Session Resume](docs/21-interruption-safe-handoff.md)
 for keeping lanes resumable when a session dies mid-task: WIP commits, per-lane
 resume cards, dead-lane recovery, and the session-archaeology runbook.
+See [Review-Lane Reliability and Quota-Wall Operations](docs/22-review-lane-reliability-and-quota-walls.md)
+for engineering the review channel itself (compaction-proof briefs, exact
+scope pins, fresh reviewer homes, channel probes), the three-channel
+quota-wall matrix with its re-fire queue, the hosted-workflow incident
+runbook (double-submit, lease leaks, sibling-runner kills, salvageable paid
+artifacts), review-loop throughput at scale, and single-line branch
+governance.
 
 ## Primary References
 
