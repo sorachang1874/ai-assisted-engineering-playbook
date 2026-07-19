@@ -134,7 +134,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     board_path = Path(args.board)
-    repo = Path(args.repo) if args.repo else board_path.resolve().parents[2]
+    repo = Path(args.repo) if args.repo else board_path.resolve().parents[1]
     errors = validate_board(board_path, repo)
     if errors:
         for error in errors:
