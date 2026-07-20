@@ -95,6 +95,14 @@ Rule:
 - [ ] Simulated output is structurally unable to pass as live evidence
       (marker stamped only by the live path); summaries distinguish
       simulated/live explicitly (doc 08's dry-run-vs-evidence checklist).
+- [ ] When a long-lived service drives the paid flow, the driver's preflight
+      also asserts PROCESS VINTAGE: the serving process must postdate the
+      last request-shaping code change (`ps -o lstart` vs. code mtime).
+      Landed ≠ running — a contract change driven through a stale process
+      executes the OLD request shapes (a per-function shard plan that went
+      out as one broad query because the backend predated the change).
+      Restart the service or drive via the library path; dry-run validates
+      the working tree, never the resident process.
 
 ## 4. The second manual live-ops action becomes a committed adapter
 
