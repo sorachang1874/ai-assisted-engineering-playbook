@@ -999,7 +999,92 @@ Principle 30 owns deliberate noes — rulings, with tripwires; principle 16 owns
 - **The log is load-bearing, not archival.** Principle 38's harness loop diffs each new proposal against it before spending a run; and a failure that hardens into a decision never to retry graduates into principle 30's ledger with a tripwire — this principle owns the raw evidence beneath those rulings.
 - **Executable form:** `templates/NEGATIVE_EVIDENCE.template.md`, instantiated beside the project's residual ledger — one dated row per abandoned attempt: what was tried · model/version/date · direct cause · causal state · abstract mechanism · why abandoned; the handoff template's negative-evidence field is required (`none` allowed, blank not); `08-review-and-delivery-checklists.md`'s harness-change review diffs proposals against this file.
 
-## 40. A Lane That Can Skip Its Subject Is Not Evidence — External-Runtime Skips Fail Closed
+## 40. A Gate Round May Overturn a Prior Round — Primary Sources Beat Precedent
+
+A multi-round review gate is evidence-driven, not precedent-driven. The failure mode: round 1
+suggests a fix, the author complies, and every later round treats the round-1 framing as settled
+— so a *wrong premise* gets hardened into code, tests, and comments with each round "confirming"
+the previous one. Rounds must stay free to refute earlier rounds, including the reviewer's own
+prior suggestion, when a primary source (upstream source code, the spec, the vendor's parser)
+says otherwise. Correctness beats consistency with the transcript.
+
+- **When a fix encodes a semantic claim about an external system** (an init system, a kernel
+  interface, a browser, a wire protocol), the review scope must include *verifying that claim
+  against the primary source*, not just checking the code implements the claim faithfully. A
+  fix can be internally perfect and semantically wrong.
+- **Reward the reversal, don't litigate it.** A real case: round 1 proposed modeling "an empty
+  assignment resets the dependency list" (true for most of that config format's list settings);
+  the author complied, with a red-team fixture demonstrating the "reset bypass". Round 2 — the
+  same reviewer — refuted its own round-1 premise by citing the upstream parser: *dependency*
+  directives are accumulate-only and an empty assignment is a no-op, so the "bypass" did not
+  exist and the checker's rejection message explained something false. The reversal was the
+  most valuable finding of the gate; accepting it cost one round, entrenching it would have
+  cost every future reader.
+- **Mechanically:** prompt each confirming round with the prior round's verdict *attached* and
+  an explicit license to overturn it with sources; never scope a round to "confirm the fixes"
+  so narrowly that refuting the fix's premise is out of bounds.
+
+## 41. Separate Semantic Modeling from Policy — Lint Your Preferences Explicitly
+
+When a validator encodes rules about an external system, keep two layers visibly distinct:
+**semantics** — what the system actually does, modeled faithfully with the primary source cited
+— and **policy** — what you *additionally* refuse even though the system would accept it.
+Collapsing policy into the semantic model produces validators that reject with false
+explanations ("this resets your dependency" when it doesn't), red-team fixtures that document
+nonexistent attack vectors, and future readers who learn wrong semantics from your code.
+
+- **The semantic layer is not yours to design.** Its only correctness criterion is fidelity to
+  the external system; cite the source (spec section, upstream function) in the docstring so
+  the next reader can re-verify rather than re-derive.
+- **The policy layer is yours — so say so.** Reject the suspicious-but-harmless shape (an
+  ineffective reset attempt, a no-op directive with no legitimate use) with a message that says
+  *policy*, names the shape, and says why it is suspicious — not a message that misattributes a
+  behavior to the external system.
+- **Fixtures follow the split.** A must-reject fixture for a policy lint asserts the lint
+  message, and its comment says "no-op in the real system, rejected as policy"; a fixture that
+  claims to demonstrate a real bypass must actually be one. A fixture with a false premise is
+  negative documentation — it teaches the attack that isn't.
+- Being stricter than the external system is fine (fail-closed, principle 20); *describing* the
+  external system wrongly is not. The test: could someone learn the external system's real
+  behavior from your checker's messages and comments alone? If not, the layers are merged.
+
+## 42. An Expensive Read Happens Once — Derive a Caption the Next Agent Reads Instead of the Source
+
+Some inputs are expensive or irreversible to read: a scanned multi-page PDF read page-by-page
+through vision, a long transcript, a large paid-API response, a forum thread exported to images.
+Re-reading them every session is pure waste — but the naive fix ("read once, save the text")
+silently drops what lived *only* in the source: the terminal output inside a screenshot, the
+numbers on a chart, the caveat in a diagram. The derived note then *looks* complete and the next
+agent trusts it as the whole, never knowing what was lost. The discipline is to derive a
+**caption** — a standalone summary the next agent reads *instead of* the source — and to make its
+completeness checkable rather than assumed.
+
+- **The caption must self-attest its read depth.** Record how much of the source was read (all N
+  pages, or "exported PDF stopped at page 11/24 — replies not captured"), the source's scale, and
+  a fetch date. A caption that hides how partial it is manufactures false confidence; one that
+  says "pages 12–24 unread, go to the source for the reply-section caveats" routes the next agent
+  correctly.
+- **Transcribe the visual layer, not just the text layer.** A source's screenshots, charts, and
+  terminal captures carry facts the text extractor never sees; the caption needs an explicit
+  *source-only* section that pulls them in. Skipping it turns "read once" into "read half" — and
+  the omission is invisible downstream. (This is the single most common way a caption betrays the
+  reader.)
+- **A caption expires.** The source can change; the caption records its capture date and, where
+  the source is a living page, the condition under which it must be re-read (principle 39's expiry
+  applied to derived reads).
+- **A caption can be more visible than its source.** For a sensitive source, the caption
+  *describes which fields exist* and transcribes no secret values — so the source stays access-
+  restricted while the caption is freely shared/committed. Field-presence, never values (doc 12).
+- **A master index precedes the sources.** One index the agent reads first — "read the caption
+  before reopening the source" — turns a directory of opaque blobs into a navigable, cheap-to-
+  scan map; each entry carries a one-line hook and the caption's relevance to the current work.
+- **Executable form:** every expensive source gets a sibling `<source>.caption.md` from
+  `templates/CAPTION.template.md` — frontmatter with `read_status` (fully-read / partial + what's
+  missing), source scale, `sensitivity`, and a **required** *source-only / image-only* section; a
+  master `INDEX.md` states the read-caption-before-source rule and links every caption. The pass
+  that builds captions fans out one reader per source (doc 07) and reuses any prior extraction
+  before re-rendering (don't pay the expensive read twice).
+## 43. A Lane That Can Skip Its Subject Is Not Evidence — External-Runtime Skips Fail Closed
 
 Principle 20 keeps a component from running unprotected when its separate enforcement is absent;
 this is the same rule pointed at CI: a gating test lane must hard-depend on the external runtime
@@ -1034,3 +1119,4 @@ literal: no machine could have failed because of the property the lane claimed t
   `08-review-and-delivery-checklists.md` (skip counts in gating lanes are zero or
   REQUIRE-gated); the Pitfall Log row in `13-operator-decisions-and-evidence-integrity.md`
   (gating lane mass-skips its absent subject).
+
