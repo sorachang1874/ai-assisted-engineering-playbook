@@ -19,7 +19,14 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Production-like test isolation early: use real dependencies where behavior matters, isolated data, fake providers, and separate local/scripted/live/prod modes.
 - Durable execution for long workflows: append-only event log, typed commands/outbox, activity attempts, idempotency, leases, retry policy, and materialized current state.
 - Agent-safe surfaces: agents should operate through operation/action/command APIs, not mutate domain tables directly.
-- Documentation is runtime infrastructure: `AGENTS.md`, `NEXT_TODO.md`, `PROGRESS.md`, contracts, and signoff docs should stay close to the code.
+- Documentation is runtime infrastructure: route problems through a project
+  index into module-owned contracts, product artifacts, tests, and runbooks;
+  keep root `NEXT_TODO.md` and `PROGRESS.md` as bounded snapshots rather than
+  unbounded stores.
+- Optimize the delivery graph, not agent utilization: freeze shared decisions,
+  dispatch only dependency-ready lanes with disjoint writes, model review as an
+  edge to promotion, and continuously distill failures and avoidable work into
+  executable improvements.
 - Reviews need packets, not just prompts: design, implementation, and adoption reviews should receive explicit artifacts, boundaries, evidence classes, validation output, and claims to verify.
 - Plan-only artifacts before risky execution: external calls, cache writes, scheduled jobs, and publication should be preceded by reviewable plans that keep execution flags false.
 - Schema and storage before code: define artifact shape, visibility, write mode, retention, redaction, and downstream consumers before building producers.
@@ -34,7 +41,7 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - Secrets stay server-side and out of commits and logs; runtime mode comes from one central config, not scattered env vars.
 - Independent review means a different model: route the gate to a different model family than the one that authored and self-critiqued the artifact; same-model self-review shares blind spots, and cross-model review repeatedly catches false-negatives it misses.
 - Fail-closed validators are allowlists, not denylists: assert the artifact exactly matches a canonical safe shape (single source of truth, emitted by the generator and deep-equaled by the checker, with a cross-language parity test) instead of enumerating bad patterns, which never terminates.
-- Attribute a failure before you own it: re-run a post-change test failure on the pinned baseline before debugging — identical failure means pre-existing, recorded in a known-failure budget, not a regression you introduced.
+- Attribute a failure before you own it: re-run a post-change test failure on the pinned baseline (in a parallel worktree, not by flipping the shared working tree) before debugging — identical failure means pre-existing, recorded in a known-failure budget, not a regression you introduced.
 - Prefer deletion to wrapping, and classify before you sweep: remove a dead dual path instead of rewriting it; for a large mechanical sweep, scout and adversarially verify each site (read vs write) before editing, preserving the surviving path's exact no-row/error sentinel.
 - Minimize gate round-trips, not findings per round: a cross-model gate round is serial and high-latency, so front-load discovery with parallel self-review lenses over every surface the gate audits, fix each finding's whole class and the ripple of any canonical change in one round, and batch the long tail into a single confirming gate instead of a round-trip per cited line.
 - Couple a component to its safety enforcement (fail closed when absent): a component whose safety depends on a separate enforcement (firewall/allowlist, network policy, sidecar) must hard-depend on it and refuse to start/serve unless the enforcement is provably in effect — assert the specific rule/chain exists, not just that the enforcement service started — so a missing enforcement fails closed (component down), not open (component running unprotected).
@@ -57,26 +64,79 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - **A top-tier model is a consultant or a planner before it is the whole task — and tier access is a lease:** solo composition now carries the burden of proof, and a tier's calendar expiry is declared before anything depends on it (principle 26 at the model boundary; quota stays principle 35's). Land it: declare each lane's `composition:` in the routing table and give every model a three-field `lease:` block — `expires` (`none` is legal), `renewal_owner`, `on_calendar_expiry`.
 - **The evaluator lives outside the loop it judges:** a self-improving loop fits whatever signal it can observe, so the rubric stays un-editable (principle 31) and un-fittable, and a mechanism change is accepted only on held-in plus held-out evidence. Land it: route evaluator changes through the highest gate, require both evidence fields on harness-change PRs, and fail any deletion of the only regression guard before its successor exists.
 - **A negative result is evidence with an expiry date:** a failed attempt recorded at mechanism depth (direct cause, causal state, abstract mechanism) and bound to model/version/date keeps the next agent from re-running it blind — or obeying a verdict the world has outgrown. Land it: log every abandoned attempt in the negative-evidence file and make the handoff's negative-evidence field required, `none` spelled out.
+- **A test lane that can skip its subject is not evidence — external-runtime skips fail closed:** a gating lane whose fixtures skip when a database or container daemon is absent reports green by asserting nothing, so treat every skip as a hidden fallback and make the dependency hard (the CI twin of principle 20). Land it: set `REQUIRE_<DEP>=1` flags unconditionally in the gating lane's command so fixtures convert skip to hard failure, assert zero skips or a pinned collected count as the lane's last step, and prove the conversion once by mutation — an unreachable dependency must turn the lane red, not green-with-skips.
+- **An instruction's premise is part of the instruction:** when observed state contradicts the premise of an explicit directive, stop and surface the conflict — silent scope escalation is a NO-GO-class error, and paid scope least of all ("report and proceed" fails when the report lands after the spend). Land it: a premise conflict is a recorded stop-and-ask event with zero paid submissions until resolved; and a paid-dispatch inventory resolves every run id in local receipts against remote run history before declaring scope uncovered — "cancelled locally" says nothing about what was paid (`24-paid-dispatch-and-live-ops-discipline.md`).
 
 ## Repository Map
 
 - `AGENTS.md`: baseline instructions for AI coding agents working in a repository.
 - `docs/`: practices and rationale.
 - `templates/`: copyable project files for new repositories, including
-  contracts, review packets, phase registries, prompts, and signoff docs.
+  documentation routers, module indexes, contracts, review packets, phase
+  registries, prompts, and signoff docs.
 - `examples/`: concrete contract, phase, review-gate, and preflight examples.
+- `scripts/check_delivery_graph.py`: standard-library validation for delivery
+  dependencies, shared write hotspots, and review-to-promotion edges.
+- `scripts/check_session_packet.py`: fail-closed validation for independent
+  Coding Agent session packets, pinned bases, dependencies, path leases,
+  validation, review, integration, and retirement policy.
 
 ## Recommended Adoption Path
 
 1. Copy `templates/AGENTS.template.md` into the project root as `AGENTS.md`.
-2. Add `templates/NEXT_TODO.template.md` and `templates/PROGRESS.template.md`.
-3. Add `templates/PHASE_REGISTRY.template.yaml` when work will span multiple
+2. Create `docs/README.md` from `templates/DOCS_INDEX.template.md` and a module
+   router from `templates/MODULE_INDEX.template.md` for each active module.
+3. Add `templates/NEXT_TODO.template.md` and `templates/PROGRESS.template.md` as
+   bounded root snapshots that link to module-owned detail.
+4. Add `templates/PHASE_REGISTRY.template.yaml` when work will span multiple
    changes, gates, or agents.
-4. For every shared feature, start with `templates/CONTRACT.template.md`.
-5. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
-6. Add one fast contract preflight before adding or relying on a long nightly test.
-7. Split environments into local dev, scripted/fake-provider, local live, and production.
-8. Move long-running workflows toward typed events, commands, activities, and current-state projections.
+5. For multi-agent or multi-session work, instantiate
+   `templates/DELIVERY_GRAPH.template.json`, validate its ready wave, and
+   bootstrap gitignored `.coord/` from the coordination templates. Issue each
+   independent Coding Agent session a validated
+   `templates/SESSION_TASK_PACKET.template.md`.
+6. When related products will converge, keep their development isolated and
+   bind exact release candidates plus versioned envelopes in
+   `templates/CROSS_PROJECT_INTEGRATION_PACKET.template.md`.
+7. For every shared feature, start with `templates/CONTRACT.template.md`.
+8. Add `templates/REVIEW_PACKET.template.md` for any design, implementation, or adoption gate.
+9. Add one fast contract preflight before adding or relying on a long nightly test.
+10. Split environments into local dev, scripted/fake-provider, local live, and production.
+11. Move long-running workflows toward typed events, commands, activities, and current-state projections.
+
+See [Documentation Routing and Lifecycle](docs/18-documentation-routing-and-lifecycle.md)
+for module-first placement, snapshot budgets, cleanup, and incremental migration.
+See [Throughput-Oriented Delivery](docs/19-throughput-oriented-delivery.md)
+for top-down dependency graphs, `.coord` execution, asynchronous review,
+bulk-change partitioning, related-product convergence, and periodic distillation.
+See [Multi-Session Team Execution](docs/20-multi-session-team-execution.md) for
+turning delivery-graph lanes into pinned, isolated, lease-bounded task packets
+that a human can dispatch across several Coding Agent sessions, and for the
+merge, cherry-pick, and branch-hygiene discipline that keeps one canonical
+integration line.
+See [Interruption-Safe Handoff and Session Resume](docs/21-interruption-safe-handoff.md)
+for keeping lanes resumable when a session dies mid-task: WIP commits, per-lane
+resume cards, dead-lane recovery, and the session-archaeology runbook.
+See [Review-Lane Reliability and Quota-Wall Operations](docs/22-review-lane-reliability-and-quota-walls.md)
+for engineering the review channel itself (compaction-proof briefs, exact
+scope pins, fresh reviewer homes, channel probes), the three-channel
+quota-wall matrix with its re-fire queue, the hosted-workflow incident
+runbook (double-submit, lease leaks, sibling-runner kills, salvageable paid
+artifacts), review-loop throughput at scale, and single-line branch
+governance.
+See [Paid Provider API Spend Discipline](docs/23-paid-provider-api-spend-discipline.md)
+for provider-agnostic spend rules: dedupe-before-dispatch with printed
+deltas, paid-artifact salvage and union before fresh spend, idempotent
+submission with query-first retries, abort-not-just-kill drivers, lossy
+cancel cleanup, identity bridging across provider stages, and batch
+geometry as a cost contract.
+See [Paid Dispatch and Live-Ops Discipline](docs/24-paid-dispatch-and-live-ops-discipline.md)
+for the agent-side rules around anything that can spend: remote-receipt
+inventory before any "uncovered" conclusion, premise-conflict stop-and-ask
+instead of silent scope escalation, fail-closed live-mode assertions,
+committed ops adapters over /tmp scripts, explicit paid-parameter resolvers
+instead of text inference, and stale-test retirement as part of the
+refactor.
 
 ## Primary References
 

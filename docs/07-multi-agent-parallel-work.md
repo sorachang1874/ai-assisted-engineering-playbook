@@ -44,6 +44,12 @@ zeroes the batch instead of degrading it (principle 35). So before fanning tasks
 asserts the model routing is declared in the checked-in routing table
 (`templates/MODEL_ROUTING.template.yaml`):
 
+- A checked-in delivery graph exists for work spanning more than one lane, and
+  `python scripts/check_delivery_graph.py <graph> --ready` passes. Dispatch only
+  the printed ready wave. The graph, not agent availability, decides width.
+- Every lane declares exact writes, validation, a stop condition, and a handoff;
+  shared write paths have one registered hotspot, integration owner, and
+  dependency-ordered writer list. An unregistered overlap fails dispatch.
 - The routing table exists.
 - Every lane names a fallback.
 - No review lane's fallback resolves to the author's model family — the independence lane of
@@ -61,6 +67,15 @@ asserts the model routing is declared in the checked-in routing table
   (`16-loops-and-model-composition.md` § Loop Hygiene; principle 32's retro-validation applied to
   fan-outs). A full-width launch that skipped the pilot fails; the handoff's pilot-findings field
   records what the pilot changed in the full run's configuration.
+- A relaunch after an interrupted fan-out names the run id it resumes from and re-dispatches only
+  lanes with no completed checkpoint (`16-loops-and-model-composition.md` § Loop Hygiene) — a
+  relaunch that would re-run a completed lane fails, and the handoff's resumed-from field records
+  the lanes re-dispatched.
+
+The complete planning and scheduling protocol is in
+`19-throughput-oriented-delivery.md`. Use
+`templates/DELIVERY_GRAPH.template.json`; do not reconstruct dependencies or
+partition maps separately in worker prompts.
 
 ## Independent Review Gate
 
@@ -187,8 +202,15 @@ Each worker handoff should include:
 - Pilot findings (required for an above-threshold fan-out — what the pilot slice changed in the
   full run's configuration: per-agent budgets, fallback rules, stall points;
   `16-loops-and-model-composition.md` § Loop Hygiene)
+- Resumed from run id / lanes re-dispatched (only on a relaunch after an interrupted fan-out —
+  name the run id the relaunch resumed from and the lanes it re-dispatched, so a rerun of an
+  already-completed lane is visible at review; `16-loops-and-model-composition.md` § Loop Hygiene)
 
 The lead agent should not rely on chat memory. It should be able to verify from files and commands.
+
+This artifact closes *completed* work. A session interrupted mid-task cannot produce it, so the
+in-flight unit of handoff is smaller and earlier: WIP commits on the lane branch plus a current
+resume card in the status file — see `21-interruption-safe-handoff.md`.
 
 ## Conflict Prevention
 
@@ -198,9 +220,24 @@ Before parallel work:
 - Assign file ownership.
 - Define validation commands.
 - Define no-touch areas.
-- Define merge order.
+- Define merge order — and the mechanism per boundary: cherry-pick lane commits by default,
+  rebase only on a lane's own branch, never rewrite the integration branch
+  (`20-multi-session-team-execution.md` § Merging and Version Control for Lane Work).
+- Register every shared write hotspot in the delivery graph; "coordinate while
+  both edit it" is an unmodelled serialization edge, not a parallel plan.
 
 ## Agent Failure Modes To Plan For
+
+- Sessions die mid-task with their state in their own context: a quota wall,
+  crash, or expired model lease kills the session and everything it never
+  wrote down. One forked remediation session died at a quota wall four minutes
+  after fork, leaving an uncommitted source edit, a stale digest pin that
+  broke validation, and a split plan that existed only in its parent's session
+  log; the resumer — a different tool entirely — paid session archaeology
+  before its first edit. The defense is recording, not redundancy: commit WIP
+  to the lane branch at every boundary, keep the resume card current, and
+  record the dispatch plan before forking
+  (`21-interruption-safe-handoff.md`).
 
 - Output-size limits kill whole-file emitters: an agent asked to produce a
   large precision file (hundreds of lines of fail-closed logic) can
@@ -233,3 +270,15 @@ Before parallel work:
   (safe to change vs defer), have an independent pass try to *refute* each
   "safe" label before the lead edits. A scout map that is merely "probably
   right" mis-edits the one site that looked safe but was not (principle 17).
+  The dispatch table the workers edit from must then be *generated* by
+  script from the verified recon artifacts, never re-typed: on one
+  domain-retirement batch a hand-typed rename map dropped one method from
+  the verified listing, re-introducing an error after the adversarial
+  pass — workers read the table, not the recon, so verify at the surface
+  the consumer reads (principle 21). Every worker brief carries the
+  closed-world clause — a site not in the table is reported as ambiguous
+  in the handoff, never guessed — which is what caught that orphan: one
+  worker reported the unlisted site instead of improvising on it (the
+  pasteable line lives in `templates/AGENT_TASK_BRIEF.template.md`
+  § Constraints). Closeout then reconciles every reported-ambiguous site
+  against the recon.

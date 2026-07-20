@@ -92,6 +92,17 @@ apply 29 and `08-review-and-delivery-checklists.md` § Cross-Model Gate Review u
   default — a fan-out of more than 5 agents, or a projected spend above $50 (both thresholds
   repo-configurable), asserts that a pilot slice ran — and the dispatch log entry carries a
   required pilot-findings field: what the pilot changed in the full run's configuration.
+- **A partially failed fan-out resumes; it never reruns survivors.** Give every fan-out a run id
+  at dispatch and land each agent's output in files keyed by it — the concrete payoff of the
+  lands-in-files rule that closes this section; the relaunch then takes resume-from-run-id and
+  re-dispatches only the lanes with no completed checkpoint. One large verification fan-out was
+  killed mid-run by a primary-model quota wall with roughly half its agents complete; because
+  every finished agent's output was checkpointed under the run id, the relaunch resumed from that
+  id and re-dispatched only the unfinished lanes — the completed half was never re-run or
+  re-rolled. Fallback (principle 35) and resume defend different halves of the batch: fallback
+  keeps agents alive *through* the wall, resume keeps finished work *through* the interruption.
+  Re-running a completed agent pays twice for reviewed work — and re-rolls outputs a reviewer may
+  already have read.
 - **Deterministic work runs as scripts, not reasoning.** Running a script is cheaper, faster, and
   more reliable than having a model re-derive the same steps every iteration (loop guide); reserve
   inference for genuine judgment points. At each pipeline stage ask: is this
@@ -189,7 +200,10 @@ fact.
 
   The Dispatch Preflight (`07-multi-agent-parallel-work.md`) fails only on a missing lease block or
   a lane whose primary is past its declared `expires`; `expires: none` is legal and passes. Quota
-  behavior stays where it already lives: the lane's `on_quota_exhaustion`.
+  behavior stays where it already lives: the lane's `on_quota_exhaustion`. For the
+  independent-review lane specifically, the recorded quota fallback is a channel change with a
+  byte-identical reviewer policy — never a model substitution:
+  `17-adversarial-design-review-loops.md` § 3.
 
 ## Harness Self-Improvement Boundaries
 
@@ -281,7 +295,7 @@ realized pitfalls.
 | --- | --- | --- | --- |
 | 1 | **Training-data default bias** | stale library/model versions; assumptions grounded in the training set, not this repo | Blindspots "this repo's conventions" + the freshness rule: every external version or capability claim is queried live and dated — one team's research agent, seeded with an old version list, anchored on it and missed two newer releases; reference implementations ride in Context. Pasteable: "Every version/capability claim in this brief was checked live on <date>; nothing is seeded from prior notes." |
 | 2 | **Implementation drift under pressure** | quietly switching to a simpler, more common approach mid-task | the Deviations discipline (`15-finding-your-unknowns.md`): departures recorded with pinning tests; a contract-direction change is a Stop Condition, not a deviation. Pasteable: "Constraint: use <approach X>; switching to <the common simpler approach Y> is a Stop Condition, not a deviation." |
-| 3 | **Memory/context decay** | long-run knowledge evaporates because logs were never persisted | implementation notes per dispatch; handoffs written to the append-only log (`14-async-multi-agent-collaboration.md`). Pasteable: "Write findings to implementation-notes.md as you go; nothing may exist only in this conversation." |
+| 3 | **Memory/context decay** | long-run knowledge evaporates because logs were never persisted | implementation notes per dispatch; handoffs written to the append-only log (`14-async-multi-agent-collaboration.md`); the in-flight recording protocol (WIP commits, resume card) is `21-interruption-safe-handoff.md`. Pasteable: "Write findings to implementation-notes.md as you go; nothing may exist only in this conversation." |
 | 4 | **Overclaiming on noisy or failed results** | "p-hacking eureka" (Bubeck, 2025): success declared on evidence that does not reproduce | DoD is evidence, not compilation (`13-operator-decisions-and-evidence-integrity.md` — unreproducible-claims row); attribute a failure before owning it (principle 16). Pasteable: "Success = <exact command> printing <literal expected output>; paste the actual output, not a paraphrase, into the handoff." |
 | 5 | **Missing domain tacit knowledge** | competent-looking work that violates the field's unwritten rules | Blindspots "prior art" + the interview-me elicitation (`15-finding-your-unknowns.md`); a reference implementation as the spec prose cannot write. Pasteable: "Before writing code, list three unwritten rules of <domain> this change could violate, and check each against the reference implementation in Context." |
 | 6 | **Missing taste** | effort flows to the wrong question; the important call is made casually | plans open with change-prone decisions (`15-finding-your-unknowns.md`); Non-Goals fence the rest. Pasteable: "The one call here that must not be made casually is <X>; it routes to the decision queue as a card (principle 34), not into the diff." |
@@ -323,6 +337,9 @@ the cure for an unknown known is a form with a blank that will not stay blank.
 - [ ] Fan-outs above the preflight threshold (more than 5 agents or over $50 projected,
       repo-configurable) ran a pilot slice first; the dispatch log's required pilot-findings field
       says what the full run's configuration changed.
+- [ ] Every fan-out carries a run id and lands each completed agent's output in files keyed by
+      it; a relaunch after interruption resumes from the run id and re-dispatches only lanes with
+      no completed checkpoint — survivors are never re-run or re-rolled.
 - [ ] Rule-decidable pipeline stages are scripts; the LLM upgrade for each is tripwired behind
       recorded evidence that the rules fail.
 - [ ] A below-bar iteration produced a system fix (guard, preflight, skill) inherited by all future

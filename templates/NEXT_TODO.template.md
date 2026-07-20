@@ -1,8 +1,30 @@
 # NEXT_TODO
 
+This is a bounded project snapshot, not an append-only backlog or decision log.
+Keep only current, blocked, and immediately next work. Link detailed work to
+the owning module and replace stale rows during each refresh.
+
+## Snapshot Metadata
+
+| Field | Value |
+| --- | --- |
+| Owner |  |
+| Last refreshed | YYYY-MM-DD |
+| Next cleanup | YYYY-MM-DD |
+| Size budget | 200 lines |
+| Documentation router | `docs/README.md` |
+
 ## Current Objective
 
 Describe the active engineering objective.
+
+Canonical module route or work item: `docs/modules/<module>/README.md`
+
+## Active Module Routes
+
+| Module | Current/blocked/next item | Canonical detail | Owner | Status |
+| --- | --- | --- | --- | --- |
+|  |  |  |  |  |
 
 ## Phase Status
 
@@ -54,3 +76,11 @@ inspection or validation. These items should not live only in chat history.
 | Contract | `make test-contract` | PR |  |
 | Integration | `make test-integration` | merge |  |
 | Nightly | `make test-nightly` | release |  |
+
+## Snapshot Cleanup
+
+- Remove completed rows after durable evidence is linked from the owning module.
+- Move decisions to decision records and contract detail to contract docs.
+- Move historical narrative to review/release artifacts only when it has durable
+  value; otherwise delete it.
+- Refresh at milestone boundaries and at least weekly during active work.

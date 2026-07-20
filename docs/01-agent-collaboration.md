@@ -5,11 +5,17 @@
 Use repository-local instructions to keep agents aligned:
 
 - `AGENTS.md`: stable rules, architecture constraints, commands, verification expectations.
-- `NEXT_TODO.md`: phase plan, open items, deletion gates, known blockers.
-- `PROGRESS.md`: current state, recent decisions, validation, handoff notes.
+- `docs/README.md`: problem-to-module router for canonical documentation.
+- `NEXT_TODO.md`: bounded current/blocked/next snapshot with links to module
+  work items, deletion gates, and known blockers.
+- `PROGRESS.md`: bounded current-state and recent-handoff snapshot with links to
+  durable decisions and validation evidence.
 - Contract docs: source of truth for shared semantics.
 
-Keep root instruction files concise. Put detailed domain contracts in `docs/` and link to them from `AGENTS.md`.
+Keep root instruction and snapshot files concise. Put detailed domain
+contracts, product artifacts, testing guidance, and runbooks in module-owned
+directories and route them through `docs/README.md` and module indexes. See
+[Documentation Routing and Lifecycle](18-documentation-routing-and-lifecycle.md).
 
 ## Task Brief Format
 
@@ -74,6 +80,15 @@ Use parallel agents only when work is owner-bounded:
 
 Avoid multiple agents editing the same contract or schema unless one lead agent owns the merge.
 
+For multi-step work, make those boundaries executable in a checked-in delivery
+graph before dispatch. The graph declares dependency edges, exact write sets,
+shared hotspots, validation, review, and promotion. A lane is ready only when
+its dependencies are complete and its writes cannot race another ready lane.
+Use `.coord/` only as the gitignored live projection of that durable graph.
+
+See [Throughput-Oriented Delivery](19-throughput-oriented-delivery.md) and
+[`DELIVERY_GRAPH.template.json`](../templates/DELIVERY_GRAPH.template.json).
+
 ## Handoff Rules
 
 Every handoff should include:
@@ -86,7 +101,10 @@ Every handoff should include:
 - Residual risks
 - Next action
 
-The next agent should be able to resume without relying on chat history.
+The next agent should be able to resume without relying on chat history. For
+the in-flight version of this rule — WIP commits, a per-lane resume card, and
+recovery from a session that dies mid-task — see
+[Interruption-Safe Handoff and Session Resume](21-interruption-safe-handoff.md).
 
 If a missing dependency blocks context acquisition or verification, record it as
 a follow-up with the impacted artifact. Examples include missing browser

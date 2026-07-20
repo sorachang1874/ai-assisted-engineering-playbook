@@ -37,6 +37,77 @@ For workflow-heavy systems, build toward:
 - Clean data per run.
 - No shared mutable test state.
 
+## Environment-Dependent Lanes Fail Closed
+
+A lane whose tests need an external runtime — a real database, a container daemon, a message
+broker — can silently skip that subject when the runtime is absent and still report green. In a
+gating lane that green is not evidence (principle 40): a skip is a hidden fallback from
+"asserted" to "not attempted" (principles 2 and 11). Make the dependency hard:
+
+- **REQUIRE flags, set unconditionally in the lane command.** Each environment-guarded fixture
+  honors a `REQUIRE_<DEP>=1` flag that converts its skip into a hard failure; the gating lane's
+  invocation exports the flag for every segment, so no segment can degrade to skipping.
+  Developer-local runs omit the flag and keep the polite skip — one fixture, two postures.
+- **Zero-skip or pinned-count assertion.** The lane's last step asserts the skip count is zero,
+  or that the collected-test count matches a pinned value. "All collected tests passed" means
+  nothing when collection quietly shrank.
+- **Mutation self-check, once per lane.** Break the dependency deliberately — point the lane at
+  an unreachable database, or stop the daemon — and confirm the lane goes red rather than
+  green-with-skips. Run it when wiring the flags and again after any fixture refactor: a
+  fail-closed path nobody has ever seen fail is a belief, not a mechanism.
+- **Report skips even where they are legal.** Non-gating lanes may skip, but the count is
+  surfaced in the run summary the operator reads, never buried — skipped is a reportable
+  outcome, not noise.
+
+## Custom-Loader Harnesses Rot Silently
+
+When tests load a shared module through a custom loader — a Node VM with a
+hand-rolled `require`, a transpile shim, a bundler alias — the loader's
+dependency map is part of the test contract. Adding an import to the shared
+module is a breaking change to every harness that loads it, and it breaks at
+module resolution, in harness initialization, with errors that look like
+product failures. Twice in one repository, a heavily imported module
+(`api.ts`) gained an import and every VM harness with a hand-rolled `require`
+failed at load time; both times the first debugging minutes went into product
+code that had never run.
+
+- **One static-dependency block per harness, fail-fast.** Stubs for modules
+  the tests must never exercise throw an explicit "harness stub: module X is
+  not loadable in this harness" error; real contract modules load through the
+  same compiled path the product uses. A new dependency is added in exactly
+  one marker-delimited place, not discovered loader call site by loader call
+  site.
+- **Resolution errors must present as harness initialization failures**, not
+  as product assertion failures. The first diagnostic question — did the
+  subject even load? — should answer itself from the error text.
+- **Repair one, sweep the class.** When a shared module's new dependency
+  breaks one loader, search for every sibling harness with the same latent
+  defect: the same repository held eight `api.ts`-loading harnesses, only one
+  was broken, and the class was proven twice — the verify-the-class discipline
+  of the classify-then-edit sweep (`07-multi-agent-parallel-work.md`).
+
+## Setup Functions Must Leave the Environment Fully Usable
+
+A setup/prepare function that provisions an ephemeral environment — a fresh
+schema, container, or sandbox — must leave it fully usable: schema *and*
+versioned migrations *and* seeds. Call sites written against the old contract
+never learn about a new precondition. One repository's isolated-test-runtime
+setup created a fresh PG schema but did not apply migrations; when a later
+change made the seed path require authoritative tables, every fresh-schema run
+failed at seeding — including the exact commands the testing playbook
+documented, which had been silently broken.
+
+- **Fix in the shared prepare function, not at call sites.** Creating the
+  schema and applying migrations in one place repaired every caller at once;
+  patching call sites would have left the next one broken.
+- **Regression-assert the end state, not the steps:** a freshly provisioned
+  environment is fully migrated, and the setup is idempotent — safe to run
+  twice against the same target.
+- **Documented but never executed is a decaying asset.** Any documented
+  operational flow needs periodic execution or a cheap fresh-environment
+  regression test; documented commands nobody runs are prose-only norms, and
+  prose binds nobody (principle 28).
+
 ## Hostile Fakes and the Revisit Leg
 
 A fake is an implicit claim about which properties of the real dependency matter, and CI's reward
@@ -104,9 +175,10 @@ freeze it:
 - Pin the observable behavior the refactor must not change — call order, argument
   shapes, summary/return slots, skip lists, raised exceptions — as an explicit
   snapshot, not prose.
-- **Run the oracle green on the pre-refactor code too.** An oracle that only ever
-  ran against the new code proves nothing about equivalence; its whole value is
-  that it passed on the control and still passes after.
+- **Run the oracle green on the pre-refactor code too** (against a parallel-worktree
+  checkout of the baseline, not by flipping the shared working tree — principle 16).
+  An oracle that only ever ran against the new code proves nothing about equivalence;
+  its whole value is that it passed on the control and still passes after.
 - Treat the oracle as a **hard gate, frozen for the duration of the refactor**: do
   not edit it to make the new code pass. If the new code disagrees, either the
   refactor changed behavior (stop), or the oracle was wrong (fix it deliberately,
@@ -121,6 +193,53 @@ freeze it:
 This is the structural-refactor analogue of the regression test (principle 16):
 a regression test pins one fixed bug; a characterization oracle pins a whole
 behavior, so a "pure move" cannot quietly become a behavior change.
+
+### Byte-Equivalence Gates for Verbatim Moves
+
+The characterization oracle proves behavior survived a move; it does not prove
+the *verbatim* claim itself. Behavior-preserving hand-drift — a reworded
+condition, a reordered guard, a "harmless" cleanup — passes every behavioral
+test while silently forfeiting the byte-for-byte guarantee the review relied
+on. When a refactor claims "moved verbatim", gate the claim mechanically:
+
+- **AST-extract every moved function** from both the old location (at the
+  pre-move revision) and the new one, so formatting and position noise drop
+  out of the comparison.
+- **Normalize both sides through an explicit allowed-substitution table** —
+  only the renames the migration itself declares (e.g. a self-method call
+  becoming a repository-method call). The table, like the expected residual
+  set below, is a reviewed artifact — an allowlist in the sense of
+  principle 15: a rewrite not on the table is a deviation, never a judgment
+  call.
+- **Byte-diff per function and compare residuals to a pre-declared expected
+  set.** Acceptance is exact set equality with counts named: one
+  domain-retirement batch accepted on "34 byte-identical + 3 disclosed
+  adaptations + 0 unexplained". Any unexplained residual fails the gate — it
+  is either an undeclared behavior change or undeclared scope, and every
+  changed line must trace to a declared intent (principle 24).
+
+"Looks identical" in review is appetite, not a gate; the mechanical diff is
+what catches the hand-drift that slips into supposedly-verbatim ports.
+
+### Determinism Checklist for Double-Run Equivalence
+
+A double-run comparison — run the same script twice, byte-compare the outputs — is only as
+strong as the nondeterminism you removed: any source you missed either fails the diff spuriously
+or, worse, happens to match and certifies nothing. One write-path A/B comparison that
+byte-compared five tables only became stable after closing all three of these:
+
+- **Freeze the clock at every layer that reads it, not just the facade.** The entry point, the
+  module under migration, and the DB adapter each read their own clock; freezing only the top
+  layer left two live clocks, and the resulting timestamp drift diffed every row. The layer you
+  froze is not necessarily the layer that runs — the same blind spot as same-worktree review
+  (principle 14).
+- **Pin time-derived decision fields far beyond the test horizon.** A lease or TTL expiry that
+  sits near "now" can flip a branch between run 1 and run 2 — expired in one, live in the
+  other — so the runs execute different code paths and the diff reports a phantom behavior change.
+- **Reset ID sources explicitly; `TRUNCATE ... RESTART IDENTITY` is not enough.** Standalone
+  sequences (dump-style DDL without `OWNED BY`) are not reset by `TRUNCATE`, so run 2 starts at a
+  higher id and every id-bearing row differs. Issue an explicit `ALTER SEQUENCE ... RESTART`, or
+  normalize ids to run-relative ordinals before comparing.
 
 ## Promotion Boundary Tests
 

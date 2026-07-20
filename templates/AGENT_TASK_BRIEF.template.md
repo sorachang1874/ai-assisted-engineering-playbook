@@ -51,9 +51,27 @@ home). Answer each per task, or write why it does not apply:
 - Docs:
 - Runtime modes:
 
+## Delivery Graph Coordinates
+
+- Run id and checked-in graph path:
+- Lane id and dependencies:
+- Declared read paths:
+- Declared write paths:
+- Shared hotspot claims and writer order:
+- Review lane and protected promotion lanes:
+- Integration owner and handoff path:
+
+If this is not part of a multi-lane run, write `single-lane — no delivery
+graph`. Do not leave this section blank.
+
 ## Constraints
 
 - 
+- Closed world: edit only sites listed in `<table artifact>`; a site not in the table is
+  reported as ambiguous in the handoff, never edited by inference.
+- Do not edit paths outside this lane's declared delivery-graph writes. A newly
+  discovered write or hotspot is a stop condition and must be added by the
+  integration owner before work resumes.
 
 ## Validation
 
@@ -92,4 +110,5 @@ Report:
   `templates/NEGATIVE_EVIDENCE.template.md`; write the literal word `none` if there were none, a
   blank fails the dispatch preflight; principle 39)
 - Next step
-
+- Delivery-graph lane unblocked by this handoff
+- Distill candidates (failure or inefficiency mechanisms; `none` is valid)

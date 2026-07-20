@@ -64,6 +64,11 @@ A practical SSOT that makes this work: one Lead-maintained **project-status snap
 "read it first" habit in `AGENTS.md` itself, so a fresh instance self-orients without the human
 re-explaining. (Don't rely on per-prompt reminders; encode the habit in the standing rules.)
 
+The same rule covers in-flight execution plans: a surface split, wave plan, or fork charter that
+exists only in the orchestrator's session context is invisible even to its own dispatched lanes —
+record it in the graph or `.coord/` when it is decided, before the sessions executing it start
+(`21-interruption-safe-handoff.md`).
+
 ## The live channel, concretely
 
 A minimal file-based channel needs no broker, daemon, MCP, or A2A layer — deliberately. Two or three
@@ -72,17 +77,30 @@ agents plus a human do not need lease machinery; they need clear ownership and a
 ```
 .coord/                 # gitignored, local, both instances read/write the same path
   README.md             # the rules in brief (read first)
-  BOARD.md              # mutable task table: task-id | owner | status | branch/PR | verify | expected-done | note
+  BOARD.md              # lead-owned live projection of the checked-in delivery graph
   status-<agent>.md     # one per agent; an agent writes ONLY its own (heartbeats never collide)
+  handoffs/<lane-id>.md # immutable handoff per completed attempt
+  distill/<stamp>-<agent>.md # append-only failure/inefficiency candidates
   log/
     NNN-<author>-<kind>.md   # append-only ledger; never edit a published entry
 ```
 
 Conventions that prevent the races:
 
+- **The checked-in delivery graph owns scheduling; the board only projects it.**
+  Dependency edges, write paths, hotspots, gate policy, and promotion edges are
+  normative and lead-owned in Git. The board may say who is active, but cannot
+  make an incomplete lane ready. Validate and dispatch only the graph's ready
+  wave (`19-throughput-oriented-delivery.md`).
+
 - **Per-agent status files, never a shared status block.** Each agent edits only its own file, so two
   agents never contend on the same line. Last-writer-wins is fine for the board because the
   one-owner-per-row map means the two agents edit *different* rows.
+- **The status file doubles as the lane's resume card.** It has two readers: the lead's sweep, and a
+  cold resumer — possibly a different tool or model family — picking the lane up after its owner dies
+  mid-task. It must carry goal, base commit, touched paths, last validation, state, and next step,
+  with no references to conversation; the card format and the dead-lane recovery protocol are in
+  `21-interruption-safe-handoff.md`.
 - **Append-only log with author-embedded filenames.** `NNN-<author>-<kind>.md` means two agents writing
   at the same instant produce *distinct* files — no lost update, no locks. To revise a published entry,
   append a `correction` referencing the old number; never edit it in place.
@@ -95,6 +113,14 @@ Conventions that prevent the races:
   sweep checks a running loop against it, so a stalled or drifting loop is sweep-visible rather than
   quietly dead (principle 36; `16-loops-and-model-composition.md`). A row past its `expected-done`
   with no closing `verify:` is the sweep's cue to inspect, not to wait.
+- **The board carries directives and a defect log, not just task rows.** A
+  `Recorded directives` section (operator rulings, dated, newest first) and a
+  defect/incident log make accumulated corrections cold-readable by any fresh
+  session: one agent re-fired a paid job against corrections that existed
+  only in a prior session's conversation history — on the board, they are
+  unmissable. Normative directives still get promoted to git per the
+  layering rule above; these sections are the in-flight layer every session
+  reads first.
 - **A request template so a cross-agent ask is actionable in one read.** A cross-boundary request
   carries: *what is needed · why · the exact file/contract · a suggested change · the single decision
   the lead must make*. A vague "can you look at this?" costs a round-trip; a precise patch-shaped ask
@@ -102,6 +128,10 @@ Conventions that prevent the races:
 - **Hygiene as a standing chore.** Archive the log once it passes ~20 entries; keep the board to *active*
   tasks only (done milestones sink into the project-status snapshot). A live channel that accretes
   forever stops being read.
+- **Distill without interrupting delivery.** Any agent may append a candidate
+  for a repeated failure or avoidable-work mechanism. A separate lead-scheduled
+  lane synthesizes candidates at milestone/weekly triggers; raw observations do
+  not mutate the active plan or become principles by themselves.
 
 ## Why one lead, not N equals
 
@@ -122,9 +152,10 @@ contract-freeze-before-fan-out rule (doc `02`, doc `07`) is what makes the paral
 For a vocabulary/shape refactor that must keep a legacy artifact byte-identical while new work moves to
 the new model, freeze the contract **slice by slice** rather than in one big bang: per slice, the lead
 freezes the contract, the owner implements, and a **double-run equivalence test** proves the legacy path
-is unchanged while the new path produces the intended result. Mark the compatibility layer *transitional*
-with an explicit deletion gate (e.g. "remove the legacy union once the last lesson using it retires") —
-not a permanent fixture (principle 17).
+is unchanged while the new path produces the intended result (determinism checklist:
+`03-testing-strategy.md` § Determinism Checklist for Double-Run Equivalence). Mark the compatibility
+layer *transitional* with an explicit deletion gate (e.g. "remove the legacy union once the last
+lesson using it retires") — not a permanent fixture (principle 17).
 
 ## Integration discipline (separate-process specifics)
 
@@ -140,6 +171,14 @@ specifically when long-lived agents push to the same remote:
   ran from the branch. The true cutoff was found only by grepping `origin/main` for content markers, not
   by trusting the squash message or "where I thought it was." Rule: stop pushing to a merged branch; open
   a fresh PR for continued work; and confirm what a squash captured by grepping the merged content.
+- **Merge cadence: integrate early, small, and often.** Integration lag is a queue, not a badge —
+  every un-integrated lane is work-in-progress inventory whose pinned base rots toward staleness and
+  whose review artifact drifts from the bytes it certified. The mechanism menu (cherry-pick lane
+  commits by default, fast-forward for a whole reviewed wave, rebase only on a lane's own branch,
+  never rewrite the integration branch) and the branch-hygiene rules — one mainline, topic branches
+  merge back within days, merged branches deleted — are in
+  `20-multi-session-team-execution.md` § Merging and Version Control for Lane Work. In this topology
+  the human's PR merge remains the gate; the cadence rule applies to it unchanged.
 
 ## What to deliberately *not* build
 
@@ -166,7 +205,14 @@ that the separate-process reality does not actually deliver.
       lead current.
 - [ ] Per-agent status files; append-only log with global monotonic numbering; per-task `verify:`
       and `expected-done:`; a patch-shaped request template; periodic archival.
+- [ ] A checked-in, lead-owned delivery graph validates dependencies, exact
+      writes, hotspots, review/promotion edges, and the ready wave; `.coord` is
+      only its live projection.
 - [ ] Contracts frozen before fan-out (slice by slice for refactors, with a double-run equivalence test
-      and a deletion gate for any transitional compatibility layer).
+      and a deletion gate for any transitional compatibility layer; determinism checklist:
+      `03-testing-strategy.md`).
 - [ ] After a peer merges, rebase on main; verify any squash captured the intended content by grepping
       the merged result, not by assumption.
+- [ ] Distill candidates capture failures and inefficient behavior
+      asynchronously; bounded synthesis runs at milestones, weekly, or on a
+      recurrence/cost trigger.

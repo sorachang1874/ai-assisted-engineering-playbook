@@ -27,6 +27,9 @@ During implementation:
 2. Keep behavior consistent across backend, frontend, CLI, workers, docs, and tests.
 3. Centralize shared semantics.
 4. Avoid hidden fallback and dual-track normal paths.
+5. For multi-lane work, edit only the checked-in delivery graph's declared
+   write paths. A new write target or shared hotspot is a stop condition until
+   the integration owner updates the graph.
 
 Before completion:
 
@@ -37,6 +40,29 @@ Before completion:
    TODO/progress docs.
 5. Report validation honestly.
 6. Document residual risks.
+7. Capture repeatable failure and inefficient-work mechanisms as distill
+   candidates; do not block the active lane to debate them.
+
+## Multi-Agent Delivery
+
+For work spanning more than one agent or session:
+
+- freeze shared decisions before fan-out;
+- validate the checked-in delivery graph and dispatch only ready lanes;
+- use one writer per shared hotspot and record its dependency-ordered merge
+  sequence;
+- keep `.coord/` gitignored and use it only for live status, claims, handoffs,
+  questions, and distill candidates;
+- make rebuildable implementation review block promotion rather than unrelated
+  work;
+- keep destructive, live, paid, publication, and non-rebuildable execution
+  behind their blocking review edge; and
+- keep related products in separate trees/runtimes/tests until a versioned
+  capability/request/result/evidence envelope enters a pinned integration batch.
+
+See `docs/19-throughput-oriented-delivery.md` and
+`templates/DELIVERY_GRAPH.template.json` after adapting these paths to the
+project.
 
 ## Contract Field Ownership
 
