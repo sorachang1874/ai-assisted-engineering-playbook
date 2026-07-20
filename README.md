@@ -123,12 +123,12 @@ quota-wall matrix with its re-fire queue, the hosted-workflow incident
 runbook (double-submit, lease leaks, sibling-runner kills, salvageable paid
 artifacts), review-loop throughput at scale, and single-line branch
 governance.
-See [Apify/Harvest Operations Runbook](docs/23-apify-harvest-operations-runbook.md)
-for the verified actor input contracts (plain single-function shards,
-profile-scraper modes, batch sizing 400-800 with 4-8 slot-fill workers),
-spend discipline (dedupe-before-dispatch, paid-dataset salvage and union,
-idempotent submission, abort-not-just-kill, lossy cancel cleanup), and the
-identity/merge rules for opaque ACwA vs resolved slug URLs.
+See [Paid Provider API Spend Discipline](docs/23-paid-provider-api-spend-discipline.md)
+for provider-agnostic spend rules: dedupe-before-dispatch with printed
+deltas, paid-artifact salvage and union before fresh spend, idempotent
+submission with query-first retries, abort-not-just-kill drivers, lossy
+cancel cleanup, identity bridging across provider stages, and batch
+geometry as a cost contract.
 
 ## Primary References
 
