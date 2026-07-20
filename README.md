@@ -65,6 +65,7 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - **The evaluator lives outside the loop it judges:** a self-improving loop fits whatever signal it can observe, so the rubric stays un-editable (principle 31) and un-fittable, and a mechanism change is accepted only on held-in plus held-out evidence. Land it: route evaluator changes through the highest gate, require both evidence fields on harness-change PRs, and fail any deletion of the only regression guard before its successor exists.
 - **A negative result is evidence with an expiry date:** a failed attempt recorded at mechanism depth (direct cause, causal state, abstract mechanism) and bound to model/version/date keeps the next agent from re-running it blind — or obeying a verdict the world has outgrown. Land it: log every abandoned attempt in the negative-evidence file and make the handoff's negative-evidence field required, `none` spelled out.
 - **A test lane that can skip its subject is not evidence — external-runtime skips fail closed:** a gating lane whose fixtures skip when a database or container daemon is absent reports green by asserting nothing, so treat every skip as a hidden fallback and make the dependency hard (the CI twin of principle 20). Land it: set `REQUIRE_<DEP>=1` flags unconditionally in the gating lane's command so fixtures convert skip to hard failure, assert zero skips or a pinned collected count as the lane's last step, and prove the conversion once by mutation — an unreachable dependency must turn the lane red, not green-with-skips.
+- **An instruction's premise is part of the instruction:** when observed state contradicts the premise of an explicit directive, stop and surface the conflict — silent scope escalation is a NO-GO-class error, and paid scope least of all ("report and proceed" fails when the report lands after the spend). Land it: a premise conflict is a recorded stop-and-ask event with zero paid submissions until resolved; and a paid-dispatch inventory resolves every run id in local receipts against remote run history before declaring scope uncovered — "cancelled locally" says nothing about what was paid (`24-paid-dispatch-and-live-ops-discipline.md`).
 
 ## Repository Map
 
@@ -129,6 +130,13 @@ deltas, paid-artifact salvage and union before fresh spend, idempotent
 submission with query-first retries, abort-not-just-kill drivers, lossy
 cancel cleanup, identity bridging across provider stages, and batch
 geometry as a cost contract.
+See [Paid Dispatch and Live-Ops Discipline](docs/24-paid-dispatch-and-live-ops-discipline.md)
+for the agent-side rules around anything that can spend: remote-receipt
+inventory before any "uncovered" conclusion, premise-conflict stop-and-ask
+instead of silent scope escalation, fail-closed live-mode assertions,
+committed ops adapters over /tmp scripts, explicit paid-parameter resolvers
+instead of text inference, and stale-test retirement as part of the
+refactor.
 
 ## Primary References
 

@@ -113,6 +113,14 @@ Conventions that prevent the races:
   sweep checks a running loop against it, so a stalled or drifting loop is sweep-visible rather than
   quietly dead (principle 36; `16-loops-and-model-composition.md`). A row past its `expected-done`
   with no closing `verify:` is the sweep's cue to inspect, not to wait.
+- **The board carries directives and a defect log, not just task rows.** A
+  `Recorded directives` section (operator rulings, dated, newest first) and a
+  defect/incident log make accumulated corrections cold-readable by any fresh
+  session: one agent re-fired a paid job against corrections that existed
+  only in a prior session's conversation history — on the board, they are
+  unmissable. Normative directives still get promoted to git per the
+  layering rule above; these sections are the in-flight layer every session
+  reads first.
 - **A request template so a cross-agent ask is actionable in one read.** A cross-boundary request
   carries: *what is needed · why · the exact file/contract · a suggested change · the single decision
   the lead must make*. A vague "can you look at this?" costs a round-trip; a precise patch-shaped ask

@@ -3,7 +3,8 @@
 Generic operating rules for ANY paid provider API (search/scrape/enrichment
 providers, LLM relays, metered data feeds). Project-specific actor/parameter
 contracts do NOT belong here — keep those in the owning project (e.g. its own
-provider playbook). Related: doc 22 (review-lane reliability and quota walls).
+provider playbook). Related: doc 22 (review-lane reliability and quota walls)
+and doc 24 (agent-side paid-dispatch and live-ops discipline).
 
 ## 1. Dedupe before dispatch, with printed numbers
 
@@ -11,7 +12,10 @@ Every paid submission answers, in order and with counts printed:
 
 1. **Inventory**: what paid artifacts already exist for this exact work
    (datasets, run receipts, queue summaries, previously downloaded files,
-   per-record "done" flags in the document of truth)?
+   per-record "done" flags in the document of truth)? The inventory includes
+   REMOTE state: a locally cancelled or killed job says nothing about remote
+   billing. Resolve every run id in local receipts against the provider's
+   run history before declaring any scope uncovered (doc 24 §1).
 2. **Delta**: what remains genuinely unfetched/uncovered? Dry-run the delta
    count BEFORE spending. Zero delta = no submission, no exceptions.
 3. **Salvage before fresh spend**: a succeeded provider run is a readable
@@ -21,6 +25,9 @@ Every paid submission answers, in order and with counts printed:
 4. **Union, never choose**: multiple paid artifacts over the same scope get
    union-merged on a stable identity with multi-source provenance preserved,
    never silently replaced by the newest.
+5. **A duplicate batch never becomes canonical**: an unauthorized duplicate
+   is rejected and incident-logged, not adopted because it is newer.
+   Canonical = the artifact acquired under the approved plan (doc 24 §1).
 
 ## 2. Idempotency and cancellation are YOUR problem
 
@@ -68,7 +75,9 @@ ids in a search/list result, canonical slugs/URLs in a detail fetch). Rules:
 
 ## 5. Pre-spend checklist
 
-- [ ] Paid artifacts for this scope listed; delta computed and printed.
+- [ ] Paid artifacts for this scope listed — local AND remote run history
+      for every run id in local receipts (cancelled-locally ≠ unpaid);
+      delta computed and printed.
 - [ ] Salvage adopted and unioned before any fresh spend.
 - [ ] Params validated against the OWNING project's provider contract doc
       (not from memory).
