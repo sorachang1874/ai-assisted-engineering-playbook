@@ -149,6 +149,13 @@ definitions; test provenance anchors with tombstoned retirement and honest
 suites (attribute -> probe actuals -> per-mechanism fixes; guard refusals
 are findings; flip-target pins self-schedule planned contract migrations);
 and cost-profile probes before any unmeasured heavyweight command.
+See [Oracle-Gated Monolith Migration](docs/26-oracle-gated-monolith-migration.md)
+for moving code out of mega-functions a whole system runs through:
+byte-identical mutation-verified characterization oracles as absolute
+contracts, the state-lift -> closure-promotion -> verbatim-move slice
+ladder (each step behavior-invisible by construction), purity as a
+whole-body property (a partial-reading assessment the oracle caught in
+one cycle), and why debt fences must land before migration batches.
 
 ## Primary References
 
