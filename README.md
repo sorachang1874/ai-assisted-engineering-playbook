@@ -140,6 +140,15 @@ instead of silent scope escalation, fail-closed live-mode assertions,
 committed ops adapters over /tmp scripts, explicit paid-parameter resolvers
 instead of text inference, and stale-test retirement as part of the
 refactor.
+See [Shrink-Only Ratchets and Forensic Test Repair](docs/25-shrink-only-ratchets-and-forensic-test-repair.md)
+for fencing tolerated debt: three-verdict ratchet gates (regression /
+uncaptured-improvement / measurement-identity) over type-error budgets,
+provenance grandfather sets, frozen god-files, and duplicated CI lane
+definitions; test provenance anchors with tombstoned retirement and honest
+'provenance unknown' over invented history; forensic repair of stale test
+suites (attribute -> probe actuals -> per-mechanism fixes; guard refusals
+are findings; flip-target pins self-schedule planned contract migrations);
+and cost-profile probes before any unmeasured heavyweight command.
 
 ## Primary References
 
