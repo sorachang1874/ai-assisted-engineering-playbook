@@ -69,6 +69,7 @@ The goal is not to prescribe one stack. The goal is to make any stack easier for
 - **A gate round may overturn a prior round:** multi-round review is evidence-driven, not precedent-driven — when a fix encodes a semantic claim about an external system, the gate verifies the claim against the primary source (spec, upstream parser), and a later round refuting an earlier round's premise — even the reviewer's own — is the gate working, not churn.
 - **Separate semantic modeling from policy:** a validator models the external system faithfully (primary source cited) and rejects your additional preferences as an explicitly-labeled policy lint — never with a message that misattributes the refusal to the external system, and never with a fixture that documents a nonexistent bypass.
 - **An expensive read happens once — derive a caption the next agent trusts instead of the source:** a scanned PDF, long transcript, or paid-API dump is read once into a standalone caption whose completeness is *checkable* — it self-attests read depth (all N pages vs partial + what's missing), transcribes the visual layer (screenshot/chart facts a text extractor drops), expires with a capture date, and describes-fields-not-values so a sensitive source stays restricted while its caption is shared; a master index read first turns opaque blobs into a navigable map.
+- **Deep context is a dispatch liability — convert it into a mechanism dossier and spend it on a fresh context:** a long orchestrating session's edit quality decays while its mechanism knowledge peaks, so each remaining batch goes to a fresh-context agent carrying probe-proven facts (labeled with their probes), hard rules with reasons, copy-paste validation commands, a pre-authorized honest-blocker outcome, and an explicit license to disprove `assumed` premises — the license is what lets a worker overturn the caller's wrong premise with evidence instead of complying with it (`docs/27-deep-session-orchestration.md`).
 
 ## Repository Map
 
@@ -156,6 +157,16 @@ contracts, the state-lift -> closure-promotion -> verbatim-move slice
 ladder (each step behavior-invisible by construction), purity as a
 whole-body property (a partial-reading assessment the oracle caught in
 one cycle), and why debt fences must land before migration batches.
+See [Deep-Session Orchestration](docs/27-deep-session-orchestration.md)
+for keeping a deep session productive by dispatching fresh-context agents
+behind mechanism dossiers (probe-proven facts, exact validation commands,
+honest-blocker outcomes, premise-disproof licenses); probe-chain forensics
+that prove one negative per layer — with invariance proofs before a ledger
+row opens, and rows that record the probe chain rather than the symptom;
+and the shadow-slice ladder for replacing a rule ladder with a model
+stage: validator battery first, raw model surface, byte-identity shadow
+regression, backward-compatible durable identity, and a review-gated flip
+whose golden-demotion ruling is ratified before the flip.
 
 ## Primary References
 

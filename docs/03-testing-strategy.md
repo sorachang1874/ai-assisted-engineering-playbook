@@ -59,6 +59,48 @@ gating lane that green is not evidence (principle 40): a skip is a hidden fallba
   surfaced in the run summary the operator reads, never buried — skipped is a reportable
   outcome, not noise.
 
+## A Dormant Lane Is Not Evidence — Green Carries a Date
+
+Principle 43 fails a lane that runs but skips its subject; the limit case is the lane that
+never runs at all. CI triggers bind to pushes: an unpushed working branch means the gating
+lane has not executed a single one of the commits a "CI green" claim covers. One team
+discovered its curated contract lane had been dormant for ten days while 500+ commits landed
+locally — every "lane green" statement in that window described a run that predated all of
+them, and nothing in the claim's wording distinguished it from a fresh verdict.
+
+- **A green claim names its run.** Any signoff, handoff, or ledger sentence citing a lane
+  carries the run's date and head commit; the consumer diffs those against the claim's date
+  and the commits under claim. A run older than the change it vouches for is dormant
+  evidence and fails closed as evidence — exactly as a mass-skip green does.
+- **Local lane runs are the actual verification when development is local-first — record
+  them as such.** The local execution of the same lane command (command, commit, date,
+  literal result) is admissible evidence; borrowing the "CI green" label for it, or citing
+  CI while only local runs happened, launders one evidence class into another.
+- **Check dormancy cheaply in the preflight.** Compare the lane's last-run timestamp to the
+  branch's last-commit timestamp; staleness beyond a threshold is a finding about the
+  *evidence channel* itself, surfaced before any claim relies on it.
+
+## A Static Guard Is a Derived Artifact — Pair It With a Ground-Truth Probe
+
+A guard that asserts "X is never present" by scanning a checked-in surface *derives* its
+verdict from that surface — and the derivation rots when the authority surface grows a new
+source. One team's schema guard derived its expectations from the baseline schema file
+alone; once migrations beyond the baseline became a second source of truth, the guard fired
+false positives long after — the physical database was correct and the guard's derivation
+was stale. The false alarm then seeded a wrong fix premise ("the constraints were never
+created"), caught only by a probe (`27-deep-session-orchestration.md` §1).
+
+- **Enumerate the guard's authority chain and scan all of it.** Baseline plus every
+  migration, config plus every overlay — a derivation pinned to the original file silently
+  freezes the authority surface at the day the guard was written.
+- **Pair the static view with a physical probe.** A catalog parity test reads the live
+  system's own catalog (indexes, constraints, schema metadata) and diffs it against the
+  statically derived expectation, so the static and physical views cross-check each other.
+  A disagreement is first a finding about the *derivation*, not automatically about the
+  system.
+- This is principle 21 pointed at guards: a guard is a consumer of a derived truth, and
+  validated-against-the-wrong-copy applies to it exactly as to any generated artifact.
+
 ## Custom-Loader Harnesses Rot Silently
 
 When tests load a shared module through a custom loader — a Node VM with a

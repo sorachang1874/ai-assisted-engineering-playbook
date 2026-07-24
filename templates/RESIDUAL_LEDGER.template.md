@@ -88,3 +88,8 @@ Checks:
 - Row ids are unique (gate rounds cite them by id; principle 29).
 - Every inherited-debt baseline matches its pin or has moved only down — **an increase exits
   nonzero** (a decrease re-pins in the same change).
+- Every cell that cites a test lane's green names the run's date and head commit; a cited run
+  older than the change the row covers is **dormant evidence** and exits nonzero — an unpushed
+  branch means CI never ran the claimed commits, and a local execution of the lane command is
+  cited as what it is, never relabeled "CI green"
+  (`docs/03-testing-strategy.md` § A Dormant Lane Is Not Evidence).

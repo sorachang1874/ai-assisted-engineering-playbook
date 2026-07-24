@@ -13,6 +13,9 @@ What should not be changed?
 Files, contracts, docs, and recent decisions the agent must read.
 
 - Reference implementations (working code whose semantics to match, even in another language):
+- Premises (principle 44 — label every line `probe-proven: <probe>` or `assumed`; the dispatch
+  preflight fails a deep-session delegation brief with an unlabeled premise. Disproving an
+  `assumed` premise with evidence is in scope — see Stop Conditions):
 
 ## Blindspots
 
@@ -88,6 +91,12 @@ Ask for human input if:
 - A contract direction changes.
 - A destructive migration is required.
 - External credentials or live-cost decisions are needed.
+- A probe contradicts a premise of this brief: report the evidence and the corrected mechanism
+  in the handoff — silently complying with the wrong premise and silently expanding scope are
+  the same error (principle 44; `docs/24-paid-dispatch-and-live-ops-discipline.md`).
+
+Stopping with a reproduced blocker and its evidence is a successful outcome, scored as such in
+the handoff — never invent a workaround to avoid stopping (principle 44).
 
 If this brief launches a loop (goal-driven, scheduled, or event-driven —
 `docs/16-loops-and-model-composition.md`, principle 36), also declare all three lines below; the

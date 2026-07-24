@@ -1120,3 +1120,37 @@ literal: no machine could have failed because of the property the lane claimed t
   REQUIRE-gated); the Pitfall Log row in `13-operator-decisions-and-evidence-integrity.md`
   (gating lane mass-skips its absent subject).
 
+## 44. Deep Context Is a Dispatch Liability — Convert It Into a Mechanism Dossier and Spend It on a Fresh Context
+
+A long orchestrating session accumulates exactly what a fresh agent lacks — probe-proven
+mechanism knowledge — while losing exactly what a fresh agent has: the headroom to edit
+carefully. Both naive answers fail: keep working in the deep context and edit quality decays
+toward compaction (doc 22's reviewer fork, implementation-side); delegate with a thin prompt and
+the worker re-derives or guesses the mechanism. The resolution is an asymmetric split: the deep
+context writes a **mechanism dossier**, a fresh context executes it. One team ran six consecutive
+batches this way at the deep end of a forensic session — each green on its first gate — and the
+decisive property was the dossier's premise-disproof license: in one batch the worker's first
+probe overturned the caller's premise (the "missing" constraints existed; the guard's derivation
+was stale), converting a wrong compliant fix into a correct one-line fix.
+
+- **Dossier contents are mechanisms, not instructions:** probe-proven facts each labeled with
+  the probe that proved it (so the worker can re-run the probe instead of re-trusting the
+  prose), hard rules with their reasons, exact copy-paste-runnable validation commands with
+  expected literal output, and the failure's mechanism depth (principle 39) — never "look
+  into X".
+- **Label every premise `probe-proven` or `assumed` — and license disproof.** Silent compliance
+  with a wrong premise and silent scope expansion are the same error (doc 24's premise-conflict
+  rule); the license makes reporting the conflict cheaper than complying with it. This is
+  principle 40's overturning rule granted upfront to implementation lanes.
+- **Pre-authorize the honest blocker.** Stop-with-reproduced-evidence is a successful outcome,
+  scored as such in the handoff — without it, a stuck fresh context invents workarounds
+  precisely because it lacks the depth to know they are wrong.
+- **The orchestrator reviews handoffs and gates, not diffs.** Its remaining context goes to
+  what only it can do: cross-batch consistency, gate verdicts, and the next dossier.
+- **Executable form:** the brief template's Context section
+  (`templates/AGENT_TASK_BRIEF.template.md`) gains a `Premises` block — every line labeled
+  `probe-proven: <probe>` or `assumed` — and Stop Conditions gains the premise-disproof and
+  honest-blocker lines; the dispatch preflight (doc 07) fails a deep-session delegation brief
+  whose premises are unlabeled or whose validation commands are not copy-paste runnable
+  (`27-deep-session-orchestration.md`).
+

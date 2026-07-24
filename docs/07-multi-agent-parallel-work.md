@@ -71,6 +71,11 @@ asserts the model routing is declared in the checked-in routing table
   lanes with no completed checkpoint (`16-loops-and-model-composition.md` § Loop Hygiene) — a
   relaunch that would re-run a completed lane fails, and the handoff's resumed-from field records
   the lanes re-dispatched.
+- A deep-session delegation brief — one dispatched because the orchestrating context is deep
+  (principle 44; `27-deep-session-orchestration.md`) — carries a mechanism dossier: a `Premises`
+  block with every line labeled `probe-proven: <probe>` or `assumed`, copy-paste-runnable
+  validation commands with expected literal output, and the premise-disproof and honest-blocker
+  lines in Stop Conditions. A brief with unlabeled premises or non-runnable validation fails.
 
 The complete planning and scheduling protocol is in
 `19-throughput-oriented-delivery.md`. Use
